@@ -1,0 +1,26 @@
+package: go.uber.org/net/metrics
+import:
+- package: github.com/prometheus/client_golang
+  version: ~0.8.0
+  subpackages:
+  - prometheus
+  - prometheus/promhttp
+- package: github.com/prometheus/client_model
+  version: master
+  subpackages:
+  - go
+- package: github.com/uber-go/tally
+  version: ^3.3.0
+- package: go.uber.org/atomic
+  version: ^1.2.0
+- package: go.uber.org/multierr
+  version: ^1.1.0
+- package: github.com/prometheus/common
+  version: master
+  subpackages:
+  - model
+- package: github.com/stretchr/testify
+  version: ^1.1.4
+  subpackages:
+  - assert
+  - require

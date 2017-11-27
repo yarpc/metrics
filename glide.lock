@@ -1,0 +1,28 @@
+hash: 2dd8e8108a36dd47b2709f757eebd60ee467ae38fcb45dd4e7ea212f8667aad9
+updated: 2017-11-27T11:59:17.102468619-08:00
+imports:
+- name: github.com/prometheus/client_golang
+  version: c5b7fccd204277076155f10851dad72b76a49317
+  subpackages:
+  - prometheus
+  - prometheus/promhttp
+- name: github.com/prometheus/client_model
+  version: 6f3806018612930941127f2a7c6c453ba2c527d2
+  subpackages:
+  - go
+- name: github.com/prometheus/common
+  version: e3fb1a1acd7605367a2b378bc2e2f893c05174b7
+  subpackages:
+  - model
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  subpackages:
+  - assert
+  - require
+- name: github.com/uber-go/tally
+  version: 95078a8f10668bd1fa73ae46761cdc58d25436b8
+- name: go.uber.org/atomic
+  version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8
+- name: go.uber.org/multierr
+  version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
+testImports: []
