@@ -93,32 +93,25 @@ func zip(pairs []*promproto.LabelPair) Labels {
 
 // less provides a stable ordering among label sets.
 func (l Labels) less(other Labels) bool {
-	leftNames := make([]string, 0, len(l))
-	for k := range l {
-		leftNames = append(leftNames, k)
-	}
-	sort.Strings(leftNames)
-	left := newDigester()
-	for _, n := range leftNames {
-		left.add("", n)
-		left.add("", l[n])
-	}
-
-	rightNames := make([]string, 0, len(other))
-	for k := range l {
-		rightNames = append(rightNames, k)
-	}
-	sort.Strings(rightNames)
-	right := newDigester()
-	for _, n := range rightNames {
-		right.add("", n)
-		right.add("", other[n])
-	}
-
+	left, right := newDigester(), newDigester()
+	l.addToDigester(left)
+	other.addToDigester(right)
 	cmp := bytes.Compare(left.digest(), right.digest())
 	left.free()
 	right.free()
 	return cmp == -1
+}
+
+func (l Labels) addToDigester(d *digester) {
+	names := make([]string, 0, len(l))
+	for k := range l {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	for _, n := range names {
+		d.add("", n)
+		d.add("", l[n])
+	}
 }
 
 // IsValidName checks whether the supplied string is a valid metric and label
