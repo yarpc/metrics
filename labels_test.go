@@ -138,12 +138,20 @@ func TestScrubQuick(t *testing.T) {
 	// values.
 	t.Run("scrubName", func(t *testing.T) {
 		quick.Check(func(s string) bool {
-			return IsValidName(scrubName(s))
+			scrubbed := scrubName(s)
+			if IsValidName(s) {
+				return s == scrubbed
+			}
+			return IsValidName(scrubbed)
 		}, nil)
 	})
 	t.Run("scrubLabelValue", func(t *testing.T) {
 		quick.Check(func(s string) bool {
-			return IsValidLabelValue(scrubLabelValue(s))
+			scrubbed := scrubLabelValue(s)
+			if IsValidLabelValue(s) {
+				return s == scrubbed
+			}
+			return IsValidLabelValue(scrubbed)
 		}, nil)
 	})
 }
