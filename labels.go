@@ -164,6 +164,50 @@ func IsValidName(s string) bool {
 	return true
 }
 
+// scrubName replaces any invalid runes in the input string with '_'. If the
+// input is already a valid label and metric name (in both Prometheus and
+// Tally), it's returned unchanged.
+func scrubName(s string) string {
+	if IsValidName(s) {
+		return s
+	}
+	if len(s) == 0 {
+		return DefaultLabelName
+	}
+
+	d := newDigester()
+	switch c := s[0]; {
+	case 'A' <= c && c <= 'Z':
+		d.bs = append(d.bs, c)
+	case 'a' <= c && c <= 'z':
+		d.bs = append(d.bs, c)
+	case c == '_':
+		d.bs = append(d.bs, c)
+	default:
+		d.bs = append(d.bs, '_')
+	}
+
+	for i := 1; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case '0' <= c && c <= '9':
+			d.bs = append(d.bs, c)
+		case 'A' <= c && c <= 'Z':
+			d.bs = append(d.bs, c)
+		case 'a' <= c && c <= 'z':
+			d.bs = append(d.bs, c)
+		case c == '_':
+			d.bs = append(d.bs, c)
+		default:
+			d.bs = append(d.bs, '_')
+		}
+	}
+
+	scrubbed := string(d.bs)
+	d.free()
+	return scrubbed
+}
+
 // IsValidLabelValue checks whether the supplied string is a valid label value
 // in both Prometheus and Tally.
 //
@@ -244,49 +288,5 @@ func scrubLabelValues(ss []string) []string {
 	for i, dirty := range ss {
 		scrubbed[i] = scrubLabelValue(dirty)
 	}
-	return scrubbed
-}
-
-// scrubName replaces any invalid runes in the input string with '_'. If the
-// input is already a valid label and metric name (in both Prometheus and
-// Tally), it's returned unchanged.
-func scrubName(s string) string {
-	if IsValidName(s) {
-		return s
-	}
-	if len(s) == 0 {
-		return DefaultLabelName
-	}
-
-	d := newDigester()
-	switch c := s[0]; {
-	case 'A' <= c && c <= 'Z':
-		d.bs = append(d.bs, c)
-	case 'a' <= c && c <= 'z':
-		d.bs = append(d.bs, c)
-	case c == '_':
-		d.bs = append(d.bs, c)
-	default:
-		d.bs = append(d.bs, '_')
-	}
-
-	for i := 1; i < len(s); i++ {
-		c := s[i]
-		switch {
-		case '0' <= c && c <= '9':
-			d.bs = append(d.bs, c)
-		case 'A' <= c && c <= 'Z':
-			d.bs = append(d.bs, c)
-		case 'a' <= c && c <= 'z':
-			d.bs = append(d.bs, c)
-		case c == '_':
-			d.bs = append(d.bs, c)
-		default:
-			d.bs = append(d.bs, '_')
-		}
-	}
-
-	scrubbed := string(d.bs)
-	d.free()
 	return scrubbed
 }
