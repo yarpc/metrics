@@ -20,7 +20,7 @@
 
 package metrics
 
-import "testing"
-
-func TestNothing(t *testing.T) {
+// Controller has the ability to expose the metrics that are registered against
+// the registry this controller was created with.
+type Controller struct {
 }
