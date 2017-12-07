@@ -174,6 +174,24 @@ func TestVectorMetricDuplicates(t *testing.T) {
 		assert.Error(t, err, "Unexpected success re-using vector metrics metadata.")
 	})
 
+	t.Run("different type and mixed labels", func(t *testing.T) {
+		// If we change the type and make some constant labels variable, we still
+		// can't re-use metadata.
+		_, err := r.NewCounterVector(Opts{
+			Name:           "test_different_type_mixed_labels",
+			Help:           "help",
+			Labels:         Labels{"foo": "ok"},
+			VariableLabels: []string{"bar"},
+		})
+		require.NoError(t, err, "Failed to create initial metric.")
+		_, err = r.NewGaugeVector(Opts{
+			Name:           "test_different_type_mixed_labels",
+			Help:           "help",
+			VariableLabels: []string{"foo", "bar"},
+		})
+		require.Error(t, err)
+	})
+
 	t.Run("different help", func(t *testing.T) {
 		// Changing the help string doesn't change the metric's identity.
 		_, err := r.NewCounterVector(Opts{
