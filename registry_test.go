@@ -22,6 +22,7 @@ package metrics
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,6 +46,12 @@ func TestScalarMetricDuplicates(t *testing.T) {
 	t.Run("different type", func(t *testing.T) {
 		// Even if you change the metric type, you still can't re-use metadata.
 		_, err := r.NewGauge(opts)
+		assert.Error(t, err)
+		_, err = r.NewHistogram(HistogramOpts{
+			Opts:    opts,
+			Unit:    time.Nanosecond,
+			Buckets: []int64{1, 2},
+		})
 		assert.Error(t, err)
 	})
 
@@ -158,6 +165,12 @@ func TestVectorMetricDuplicates(t *testing.T) {
 	t.Run("different type", func(t *testing.T) {
 		// Even if you change the metric type, you still can't re-use metadata.
 		_, err := r.NewGaugeVector(opts)
+		assert.Error(t, err, "Unexpected success re-using vector metrics metadata.")
+		_, err = r.NewHistogramVector(HistogramOpts{
+			Opts:    opts,
+			Unit:    time.Nanosecond,
+			Buckets: []int64{1, 2},
+		})
 		assert.Error(t, err, "Unexpected success re-using vector metrics metadata.")
 	})
 

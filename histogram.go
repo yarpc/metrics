@@ -22,8 +22,47 @@ package metrics
 
 import (
 	"fmt"
+	"math"
+	"sync"
 	"time"
+
+	promproto "github.com/prometheus/client_model/go"
+	"go.uber.org/atomic"
 )
+
+type bucket struct {
+	atomic.Int64
+
+	upper int64 // bucket upper bound, inclusive
+}
+
+type buckets []*bucket
+
+func newBuckets(upperBounds []int64) buckets {
+	bs := make(buckets, 0, len(upperBounds)+1)
+	for _, upper := range upperBounds {
+		bs = append(bs, &bucket{upper: upper})
+	}
+	if upperBounds[len(upperBounds)-1] != math.MaxInt64 {
+		bs = append(bs, &bucket{upper: math.MaxInt64})
+	}
+	return bs
+}
+
+func (bs buckets) get(val int64) *bucket {
+	// Binary search to find the correct bucket for this observation. Bucket
+	// upper bounds are inclusive.
+	i, j := 0, len(bs)
+	for i < j {
+		h := i + (j-i)/2
+		if val > bs[h].upper {
+			i = h + 1
+		} else {
+			j = h
+		}
+	}
+	return bs[i]
+}
 
 // A Histogram approximates a distribution of values. They're both more
 // efficient and easier to aggregate than Prometheus summaries or M3 timers.
@@ -33,21 +72,42 @@ import (
 // All exported methods are safe to use concurrently, and nil *Histograms are
 // valid no-op implementations.
 type Histogram struct {
-	meta metadata
+	meta       metadata
+	unit       time.Duration
+	bounds     []int64
+	buckets    buckets
+	sum        atomic.Int64 // required by Prometheus
+	labelPairs []*promproto.LabelPair
 }
 
-func newHistogram(m metadata) *Histogram {
-	return &Histogram{m}
+func newHistogram(m metadata, unit time.Duration, uppers []int64) *Histogram {
+	return &Histogram{
+		buckets:    newBuckets(uppers),
+		meta:       m,
+		unit:       unit,
+		bounds:     uppers,
+		labelPairs: m.MergeLabels(nil /* variable label vals */),
+	}
 }
 
 // Observe finds the correct bucket for the supplied duration and increments
 // its counter.
 func (h *Histogram) Observe(d time.Duration) {
+	if h == nil {
+		return
+	}
+	h.ObserveInt(int64(d / h.unit))
 }
 
 // ObserveInt finds the correct bucket for the supplied integer and increments
 // its counter.
 func (h *Histogram) ObserveInt(n int64) {
+	if h == nil {
+		return
+	}
+	bucket := h.buckets.get(n)
+	bucket.Inc()
+	h.sum.Add(n)
 }
 
 func (h *Histogram) describe() metadata {
@@ -55,7 +115,23 @@ func (h *Histogram) describe() metadata {
 }
 
 func (h *Histogram) snapshot() HistogramSnapshot {
-	return HistogramSnapshot{}
+	return HistogramSnapshot{
+		Name:   *h.meta.Name,
+		Labels: zip(h.labelPairs),
+		Unit:   h.unit,
+		Values: h.observations(),
+	}
+}
+
+func (h *Histogram) observations() []int64 {
+	var obs []int64
+	for _, b := range h.buckets {
+		n := b.Load()
+		for i := int64(0); i < n; i++ {
+			obs = append(obs, b.upper)
+		}
+	}
+	return obs
 }
 
 // A HistogramVector is a collection of Histograms that share a name and some
@@ -67,11 +143,21 @@ func (h *Histogram) snapshot() HistogramSnapshot {
 // For a general description of vector types, see the package-level
 // documentation.
 type HistogramVector struct {
-	meta metadata
+	meta   metadata
+	unit   time.Duration
+	bounds []int64
+
+	histogramsMu sync.RWMutex
+	histograms   map[string]*Histogram // key is variable label vals
 }
 
-func newHistogramVector(m metadata) *HistogramVector {
-	return &HistogramVector{m}
+func newHistogramVector(m metadata, unit time.Duration, uppers []int64) *HistogramVector {
+	return &HistogramVector{
+		meta:       m,
+		unit:       unit,
+		bounds:     uppers,
+		histograms: make(map[string]*Histogram, _defaultCollectionSize),
+	}
 }
 
 // Get retrieves the histogram with the supplied variable label names and
@@ -83,7 +169,28 @@ func (hv *HistogramVector) Get(variableLabels ...string) (*Histogram, error) {
 	if hv == nil {
 		return nil, nil
 	}
-	return nil, nil
+	if err := hv.meta.ValidateVariableLabels(variableLabels); err != nil {
+		return nil, err
+	}
+	digester := newDigester()
+	for i := 0; i < len(variableLabels)/2; i++ {
+		digester.add("", scrubLabelValue(variableLabels[i*2+1]))
+	}
+
+	hv.histogramsMu.RLock()
+	h, ok := hv.histograms[string(digester.digest())]
+	hv.histogramsMu.RUnlock()
+	if ok {
+		digester.free()
+		return h, nil
+	}
+
+	hv.histogramsMu.Lock()
+	h, err := hv.newHistogram(digester.digest(), variableLabels)
+	hv.histogramsMu.Unlock()
+	digester.free()
+
+	return h, err
 }
 
 // MustGet behaves exactly like Get, but panics on errors. If code using this
@@ -99,10 +206,32 @@ func (hv *HistogramVector) MustGet(variableLabels ...string) *Histogram {
 	return h
 }
 
+func (hv *HistogramVector) newHistogram(key []byte, variableLabels []string) (*Histogram, error) {
+	h, ok := hv.histograms[string(key)]
+	if ok {
+		return h, nil
+	}
+	h = &Histogram{
+		buckets:    newBuckets(hv.bounds),
+		meta:       hv.meta,
+		unit:       hv.unit,
+		bounds:     hv.bounds,
+		labelPairs: hv.meta.MergeLabels(variableLabels),
+	}
+	hv.histograms[string(key)] = h
+	return h, nil
+}
+
 func (hv *HistogramVector) describe() metadata {
 	return hv.meta
 }
 
 func (hv *HistogramVector) snapshot() []HistogramSnapshot {
-	return nil
+	hv.histogramsMu.RLock()
+	defer hv.histogramsMu.RUnlock()
+	snaps := make([]HistogramSnapshot, 0, len(hv.histograms))
+	for _, h := range hv.histograms {
+		snaps = append(snaps, h.snapshot())
+	}
+	return snaps
 }
