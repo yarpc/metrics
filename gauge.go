@@ -81,7 +81,7 @@ func (g *Gauge) Swap(n int64) int64 {
 // indicates whether the swap succeeded.
 func (g *Gauge) CAS(old, new int64) bool {
 	if g == nil {
-		return false
+		return true
 	}
 	return g.val.CAS(old, new)
 }

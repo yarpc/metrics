@@ -102,7 +102,7 @@ func assertNopGauge(t testing.TB, g *Gauge) {
 	assert.Equal(t, int64(0), g.Dec(), "Unexpected result from no-op Dec.")
 	assert.Equal(t, int64(0), g.Load(), "Unexpected result from no-op Load.")
 	assert.Equal(t, int64(0), g.Swap(42), "Unexpected result from no-op Swap.")
-	assert.False(t, g.CAS(42, 10), "Unexpected result from no-op CAS.")
+	assert.True(t, g.CAS(42, 10), "Unexpected result from no-op CAS.")
 }
 
 func assertNopGaugeVector(t testing.TB, vec *GaugeVector) {
