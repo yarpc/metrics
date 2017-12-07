@@ -1,8 +1,10 @@
 hash: 2dd8e8108a36dd47b2709f757eebd60ee467ae38fcb45dd4e7ea212f8667aad9
-updated: 2017-11-27T12:21:51.774372643-08:00
+updated: 2017-12-07T16:08:26.707957382-08:00
 imports:
+- name: github.com/facebookgo/clock
+  version: 600d898af40aa09a7a93ecb9265d87b0504b6f03
 - name: github.com/golang/protobuf
-  version: 17ce1425424ab154092bbb43af630bd647f3bb0d
+  version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
   subpackages:
   - proto
 - name: github.com/prometheus/client_golang
@@ -24,7 +26,7 @@ imports:
   - assert
   - require
 - name: github.com/uber-go/tally
-  version: 95078a8f10668bd1fa73ae46761cdc58d25436b8
+  version: 6c4631652c6aab57c64f65c2e0aaec2e9aae3a64
 - name: go.uber.org/atomic
   version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8
 - name: go.uber.org/multierr
