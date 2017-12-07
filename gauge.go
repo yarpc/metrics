@@ -138,7 +138,7 @@ func (gv *GaugeVector) Get(variableLabels ...string) (*Gauge, error) {
 	if gv == nil {
 		return nil, nil
 	}
-	m, err := gv.getOrCreate(variableLabels...)
+	m, err := gv.getOrCreate(variableLabels)
 	if err != nil {
 		return nil, err
 	}

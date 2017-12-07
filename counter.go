@@ -106,7 +106,7 @@ func (cv *CounterVector) Get(variableLabels ...string) (*Counter, error) {
 	if cv == nil {
 		return nil, nil
 	}
-	m, err := cv.getOrCreate(variableLabels...)
+	m, err := cv.getOrCreate(variableLabels)
 	if err != nil {
 		return nil, err
 	}
