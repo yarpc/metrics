@@ -29,6 +29,11 @@ import (
 //
 // Nil *Counters are safe no-op implementations.
 type Counter struct {
+	meta metadata
+}
+
+func newCounter(m metadata) *Counter {
+	return &Counter{m}
 }
 
 // Add increases the value of the counter and returns the new value. Since
@@ -57,6 +62,10 @@ func (c *Counter) Load() int64 {
 	return 0
 }
 
+func (c *Counter) describe() metadata {
+	return c.meta
+}
+
 // A CounterVector is a collection of Counters that share a name and some
 // constant labels, but also have a consistent set of variable labels.
 // All exported methods are safe to use concurrently.
@@ -66,6 +75,11 @@ func (c *Counter) Load() int64 {
 // For a general description of vector types, see the package-level
 // documentation.
 type CounterVector struct {
+	meta metadata
+}
+
+func newCounterVector(m metadata) *CounterVector {
+	return &CounterVector{m}
 }
 
 // Get retrieves the counter with the supplied variable label names and values
@@ -91,4 +105,8 @@ func (cv *CounterVector) MustGet(variableLabels ...string) *Counter {
 		panic(fmt.Sprintf("failed to get counter: %v", err))
 	}
 	return c
+}
+
+func (cv *CounterVector) describe() metadata {
+	return cv.meta
 }

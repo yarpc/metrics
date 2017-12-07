@@ -23,11 +23,13 @@ package metrics
 // A Registry is a scoped metric registry. All metrics created with a Registry
 // will have the Registry's labels appended to them.
 type Registry struct {
+	core        *coreRegistry
 	constLabels Labels
 }
 
-func newRegistry(labels Labels) *Registry {
+func newRegistry(core *coreRegistry, labels Labels) *Registry {
 	return &Registry{
+		core:        core,
 		constLabels: labels,
 	}
 }
@@ -41,7 +43,15 @@ func (r *Registry) NewCounter(opts Opts) (*Counter, error) {
 	if err := opts.validateScalar(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	meta, err := newMetadata(opts)
+	if err != nil {
+		return nil, err
+	}
+	c := newCounter(meta)
+	if err := r.core.register(c); err != nil {
+		return nil, err
+	}
+	return c, nil
 }
 
 // NewGauge constructs a new Gauge.
@@ -53,7 +63,15 @@ func (r *Registry) NewGauge(opts Opts) (*Gauge, error) {
 	if err := opts.validateScalar(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	meta, err := newMetadata(opts)
+	if err != nil {
+		return nil, err
+	}
+	g := newGauge(meta)
+	if err := r.core.register(g); err != nil {
+		return nil, err
+	}
+	return g, nil
 }
 
 // NewHistogram constructs a new Histogram.
@@ -65,7 +83,15 @@ func (r *Registry) NewHistogram(opts HistogramOpts) (*Histogram, error) {
 	if err := opts.validateScalar(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	meta, err := newMetadata(opts.Opts)
+	if err != nil {
+		return nil, err
+	}
+	h := newHistogram(meta)
+	if err := r.core.register(h); err != nil {
+		return nil, err
+	}
+	return h, nil
 }
 
 // NewCounterVector constructs a new CounterVector.
@@ -77,7 +103,15 @@ func (r *Registry) NewCounterVector(opts Opts) (*CounterVector, error) {
 	if err := opts.validateVector(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	meta, err := newMetadata(opts)
+	if err != nil {
+		return nil, err
+	}
+	cv := newCounterVector(meta)
+	if err := r.core.register(cv); err != nil {
+		return nil, err
+	}
+	return cv, nil
 }
 
 // NewGaugeVector constructs a new GaugeVector.
@@ -89,7 +123,15 @@ func (r *Registry) NewGaugeVector(opts Opts) (*GaugeVector, error) {
 	if err := opts.validateVector(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	meta, err := newMetadata(opts)
+	if err != nil {
+		return nil, err
+	}
+	gv := newGaugeVector(meta)
+	if err := r.core.register(gv); err != nil {
+		return nil, err
+	}
+	return gv, nil
 }
 
 // NewHistogramVector constructs a new HistogramVector.
@@ -101,7 +143,15 @@ func (r *Registry) NewHistogramVector(opts HistogramOpts) (*HistogramVector, err
 	if err := opts.validateVector(); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	meta, err := newMetadata(opts.Opts)
+	if err != nil {
+		return nil, err
+	}
+	hv := newHistogramVector(meta)
+	if err := r.core.register(hv); err != nil {
+		return nil, err
+	}
+	return hv, nil
 }
 
 func (r *Registry) addConstLabels(opts Opts) Opts {
