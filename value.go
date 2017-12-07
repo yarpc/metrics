@@ -70,7 +70,7 @@ type vector struct {
 	metrics   map[string]metric // key is variable label vals
 }
 
-func (vec *vector) getOrCreate(labels ...string) (metric, error) {
+func (vec *vector) getOrCreate(labels []string) (metric, error) {
 	if err := vec.meta.ValidateVariableLabels(labels); err != nil {
 		return nil, err
 	}
