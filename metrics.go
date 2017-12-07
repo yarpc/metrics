@@ -20,7 +20,12 @@
 
 package metrics
 
-// New constructs a base Registry and a Controller.
+// New constructs a Registry and Controller.
 func New() (*Registry, *Controller) {
-	return newRegistry(Labels{}), nil
+	core := newCoreRegistry()
+	return newRegistry(core, Labels{}), nil
+}
+
+type metric interface {
+	describe() metadata
 }

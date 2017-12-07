@@ -33,6 +33,11 @@ import (
 // All exported methods are safe to use concurrently, and nil *Histograms are
 // valid no-op implementations.
 type Histogram struct {
+	meta metadata
+}
+
+func newHistogram(m metadata) *Histogram {
+	return &Histogram{m}
 }
 
 // Observe finds the correct bucket for the supplied duration and increments
@@ -45,6 +50,10 @@ func (h *Histogram) Observe(d time.Duration) {
 func (h *Histogram) ObserveInt(n int64) {
 }
 
+func (h *Histogram) describe() metadata {
+	return h.meta
+}
+
 // A HistogramVector is a collection of Histograms that share a name and some
 // constant labels, but also have a consistent set of variable labels. All
 // exported methods are safe to use concurrently.
@@ -54,6 +63,11 @@ func (h *Histogram) ObserveInt(n int64) {
 // For a general description of vector types, see the package-level
 // documentation.
 type HistogramVector struct {
+	meta metadata
+}
+
+func newHistogramVector(m metadata) *HistogramVector {
+	return &HistogramVector{m}
 }
 
 // Get retrieves the histogram with the supplied variable label names and
@@ -79,4 +93,8 @@ func (hv *HistogramVector) MustGet(variableLabels ...string) *Histogram {
 		panic(fmt.Sprintf("failed to get histogram: %v", err))
 	}
 	return h
+}
+
+func (hv *HistogramVector) describe() metadata {
+	return hv.meta
 }

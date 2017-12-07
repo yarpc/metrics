@@ -29,6 +29,11 @@ import (
 //
 // Nil *Gauges are safe no-op implementations.
 type Gauge struct {
+	meta metadata
+}
+
+func newGauge(m metadata) *Gauge {
+	return &Gauge{m}
 }
 
 // Add increases the value of the gauge and returns the new value. Adding
@@ -89,6 +94,10 @@ func (g *Gauge) Load() int64 {
 	return 0
 }
 
+func (g *Gauge) describe() metadata {
+	return g.meta
+}
+
 // A GaugeVector is a collection of Gauges that share a name and some constant
 // labels, but also have a consistent set of variable labels. All exported
 // methods are safe to use concurrently.
@@ -98,6 +107,11 @@ func (g *Gauge) Load() int64 {
 // For a general description of vector types, see the package-level
 // documentation.
 type GaugeVector struct {
+	meta metadata
+}
+
+func newGaugeVector(m metadata) *GaugeVector {
+	return &GaugeVector{m}
 }
 
 // Get retrieves the gauge with the supplied variable label names and values
@@ -123,4 +137,8 @@ func (gv *GaugeVector) MustGet(variableLabels ...string) *Gauge {
 		panic(fmt.Sprintf("failed to get gauge: %v", err))
 	}
 	return g
+}
+
+func (gv *GaugeVector) describe() metadata {
+	return gv.meta
 }
