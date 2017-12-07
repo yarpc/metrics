@@ -20,10 +20,22 @@
 
 package metrics
 
+import (
+	"context"
+	"errors"
+	"time"
+
+	"go.uber.org/net/metrics/push"
+
+	"go.uber.org/atomic"
+)
+
 // Controller has the ability to expose the metrics that are registered against
 // the registry this controller was created with.
 type Controller struct {
 	*coreRegistry
+
+	pushing atomic.Bool // can only push to one target
 }
 
 func newController(core *coreRegistry) *Controller {
@@ -37,4 +49,23 @@ func newController(core *coreRegistry) *Controller {
 // expensive and designed for use in unit tests.
 func (c *Controller) Snapshot() *Snapshot {
 	return c.snapshot()
+}
+
+// Push starts a goroutine that periodically exports all registered metrics to
+// the supplied target. Controllers may only push to a single target at a
+// time; to push to multiple backends simultaneously, implement a teeing
+// push.Target.
+//
+// The returned function cleanly shuts down the background goroutine.
+func (c *Controller) Push(target push.Target, tick time.Duration) (context.CancelFunc, error) {
+	if c.pushing.Swap(true) {
+		return nil, errors.New("already pushing")
+	}
+	pusher := newPusher(c.coreRegistry, target, tick)
+	go pusher.Start()
+	// We don't want to set c.pushing to false when we stop the push loop,
+	// because that would let users start another pusher. Since pushers are
+	// usually stateful, this would immediately re-push all the counter
+	// increments since process startup.
+	return pusher.Stop, nil
 }

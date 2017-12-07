@@ -28,6 +28,7 @@ import (
 
 	promproto "github.com/prometheus/client_model/go"
 	"go.uber.org/atomic"
+	"go.uber.org/net/metrics/push"
 )
 
 type bucket struct {
@@ -77,6 +78,7 @@ type Histogram struct {
 	bounds     []int64
 	buckets    buckets
 	sum        atomic.Int64 // required by Prometheus
+	pusher     push.Histogram
 	labelPairs []*promproto.LabelPair
 }
 
@@ -132,6 +134,24 @@ func (h *Histogram) observations() []int64 {
 		}
 	}
 	return obs
+}
+
+func (h *Histogram) push(target push.Target) {
+	if h.meta.DisablePush {
+		return
+	}
+	if h.pusher == nil {
+		h.pusher = target.NewHistogram(push.HistogramOpts{
+			Opts: push.Opts{
+				Name:   *h.meta.Name,
+				Labels: zip(h.labelPairs),
+			},
+			Buckets: h.bounds,
+		})
+	}
+	for _, bucket := range h.buckets {
+		h.pusher.Set(bucket.upper, bucket.Load())
+	}
 }
 
 // A HistogramVector is a collection of Histograms that share a name and some
@@ -234,4 +254,12 @@ func (hv *HistogramVector) snapshot() []HistogramSnapshot {
 		snaps = append(snaps, h.snapshot())
 	}
 	return snaps
+}
+
+func (hv *HistogramVector) push(target push.Target) {
+	hv.histogramsMu.RLock()
+	for _, m := range hv.histograms {
+		m.push(target)
+	}
+	hv.histogramsMu.RUnlock()
 }

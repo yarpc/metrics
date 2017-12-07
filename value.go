@@ -25,6 +25,7 @@ import (
 
 	promproto "github.com/prometheus/client_model/go"
 	"go.uber.org/atomic"
+	"go.uber.org/net/metrics/push"
 )
 
 // Value is an atomic with some associated metadata. It's a building block
@@ -118,4 +119,12 @@ func (vec *vector) snapshot() []SimpleSnapshot {
 		}
 	}
 	return snaps
+}
+
+func (vec *vector) push(target push.Target) {
+	vec.metricsMu.RLock()
+	for _, m := range vec.metrics {
+		m.push(target)
+	}
+	vec.metricsMu.RUnlock()
 }

@@ -22,6 +22,8 @@ package metrics
 
 import (
 	"fmt"
+
+	"go.uber.org/net/metrics/push"
 )
 
 // A Gauge is a point-in-time measurement, like a car's speedometer. All its
@@ -29,7 +31,8 @@ import (
 //
 // Nil *Gauges are safe no-op implementations.
 type Gauge struct {
-	val value
+	val    value
+	pusher push.Gauge
 }
 
 func newGauge(m metadata) *Gauge {
@@ -107,6 +110,19 @@ func (g *Gauge) describe() metadata {
 
 func (g *Gauge) snapshot() SimpleSnapshot {
 	return g.val.snapshot()
+}
+
+func (g *Gauge) push(target push.Target) {
+	if g.val.meta.DisablePush {
+		return
+	}
+	if g.pusher == nil {
+		g.pusher = target.NewGauge(push.Opts{
+			Name:   *g.val.meta.Name,
+			Labels: zip(g.val.labelPairs),
+		})
+	}
+	g.pusher.Set(g.Load())
 }
 
 // A GaugeVector is a collection of Gauges that share a name and some constant

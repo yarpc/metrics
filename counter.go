@@ -22,6 +22,8 @@ package metrics
 
 import (
 	"fmt"
+
+	"go.uber.org/net/metrics/push"
 )
 
 // A Counter is a monotonically increasing value, like a car's odometer. All
@@ -29,7 +31,8 @@ import (
 //
 // Nil *Counters are safe no-op implementations.
 type Counter struct {
-	val value
+	val    value
+	pusher push.Counter
 }
 
 func newCounter(m metadata) *Counter {
@@ -75,6 +78,19 @@ func (c *Counter) describe() metadata {
 
 func (c *Counter) snapshot() SimpleSnapshot {
 	return c.val.snapshot()
+}
+
+func (c *Counter) push(target push.Target) {
+	if c.val.meta.DisablePush {
+		return
+	}
+	if c.pusher == nil {
+		c.pusher = target.NewCounter(push.Opts{
+			Name:   *c.val.meta.Name,
+			Labels: zip(c.val.labelPairs),
+		})
+	}
+	c.pusher.Set(c.Load())
 }
 
 // A CounterVector is a collection of Counters that share a name and some
