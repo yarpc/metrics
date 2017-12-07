@@ -34,6 +34,23 @@ func newRegistry(core *coreRegistry, labels Labels) *Registry {
 	}
 }
 
+// Labeled creates a new Registry with new constant labels appended to the
+// current Registry's existing labels. Label names and values are
+// automatically scrubbed, with invalid characters replaced by underscores.
+func (r *Registry) Labeled(ls Labels) *Registry {
+	if r == nil {
+		return nil
+	}
+	newLabels := make(Labels, len(r.constLabels)+len(ls))
+	for k, v := range r.constLabels {
+		newLabels[k] = v
+	}
+	for k, v := range ls {
+		newLabels[scrubName(k)] = scrubLabelValue(v)
+	}
+	return newRegistry(r.core, newLabels)
+}
+
 // NewCounter constructs a new Counter.
 func (r *Registry) NewCounter(opts Opts) (*Counter, error) {
 	if r == nil {
