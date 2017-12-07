@@ -23,4 +23,18 @@ package metrics
 // Controller has the ability to expose the metrics that are registered against
 // the registry this controller was created with.
 type Controller struct {
+	*coreRegistry
+}
+
+func newController(core *coreRegistry) *Controller {
+	return &Controller{
+		coreRegistry: core,
+	}
+}
+
+// Snapshot returns a point-in-time view of all the metrics contained in the
+// controller's registry. It's safe to use concurrently, but is relatively
+// expensive and designed for use in unit tests.
+func (c *Controller) Snapshot() *Snapshot {
+	return c.snapshot()
 }

@@ -39,7 +39,7 @@ const _defaultCollectionSize = 128
 // The test suite for metric uniqueness is well-commented and explores the
 // consequences of these two rules.
 type coreRegistry struct {
-	sync.Mutex
+	sync.RWMutex
 
 	dimsByName map[string]string
 	ids        map[string]struct{}
@@ -78,4 +78,15 @@ func (c *coreRegistry) register(m metric) error {
 	c.Unlock()
 
 	return nil
+}
+
+func (c *coreRegistry) snapshot() *Snapshot {
+	c.RLock()
+	defer c.RUnlock()
+	s := &Snapshot{}
+	for _, m := range c.metrics {
+		s.add(m)
+	}
+	s.sort()
+	return s
 }
