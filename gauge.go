@@ -29,11 +29,15 @@ import (
 //
 // Nil *Gauges are safe no-op implementations.
 type Gauge struct {
-	meta metadata
+	val value
 }
 
 func newGauge(m metadata) *Gauge {
-	return &Gauge{m}
+	return &Gauge{val: newValue(m)}
+}
+
+func newDynamicGauge(m metadata, variableLabels []string) metric {
+	return &Gauge{val: newDynamicValue(m, variableLabels)}
 }
 
 // Add increases the value of the gauge and returns the new value. Adding
@@ -42,7 +46,7 @@ func (g *Gauge) Add(n int64) int64 {
 	if g == nil {
 		return 0
 	}
-	return 0
+	return g.val.Add(n)
 }
 
 // Sub decreases the value of the gauge and returns the new value. Subtracting
@@ -51,7 +55,7 @@ func (g *Gauge) Sub(n int64) int64 {
 	if g == nil {
 		return 0
 	}
-	return 0
+	return g.val.Sub(n)
 }
 
 // Inc increments the gauge's current value by one and returns the new value.
@@ -69,7 +73,7 @@ func (g *Gauge) Swap(n int64) int64 {
 	if g == nil {
 		return 0
 	}
-	return 0
+	return g.val.Swap(n)
 }
 
 // CAS is a compare-and-swap. It compares the current value to the old value
@@ -79,11 +83,14 @@ func (g *Gauge) CAS(old, new int64) bool {
 	if g == nil {
 		return false
 	}
-	return false
+	return g.val.CAS(old, new)
 }
 
 // Store changes the gauge's value.
 func (g *Gauge) Store(n int64) {
+	if g != nil {
+		g.val.Store(n)
+	}
 }
 
 // Load returns the gauge's current value.
@@ -91,15 +98,15 @@ func (g *Gauge) Load() int64 {
 	if g == nil {
 		return 0
 	}
-	return 0
+	return g.val.Load()
 }
 
 func (g *Gauge) describe() metadata {
-	return g.meta
+	return g.val.meta
 }
 
 func (g *Gauge) snapshot() SimpleSnapshot {
-	return SimpleSnapshot{}
+	return g.val.snapshot()
 }
 
 // A GaugeVector is a collection of Gauges that share a name and some constant
@@ -111,11 +118,15 @@ func (g *Gauge) snapshot() SimpleSnapshot {
 // For a general description of vector types, see the package-level
 // documentation.
 type GaugeVector struct {
-	meta metadata
+	vector
 }
 
 func newGaugeVector(m metadata) *GaugeVector {
-	return &GaugeVector{m}
+	return &GaugeVector{vector{
+		meta:    m,
+		factory: newDynamicGauge,
+		metrics: make(map[string]metric, _defaultCollectionSize),
+	}}
 }
 
 // Get retrieves the gauge with the supplied variable label names and values
@@ -127,7 +138,11 @@ func (gv *GaugeVector) Get(variableLabels ...string) (*Gauge, error) {
 	if gv == nil {
 		return nil, nil
 	}
-	return nil, nil
+	m, err := gv.getOrCreate(variableLabels...)
+	if err != nil {
+		return nil, err
+	}
+	return m.(*Gauge), nil
 }
 
 // MustGet behaves exactly like Get, but panics on errors. If code using this
@@ -145,8 +160,4 @@ func (gv *GaugeVector) MustGet(variableLabels ...string) *Gauge {
 
 func (gv *GaugeVector) describe() metadata {
 	return gv.meta
-}
-
-func (gv *GaugeVector) snapshot() []SimpleSnapshot {
-	return nil
 }
