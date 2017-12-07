@@ -312,6 +312,16 @@ func TestVectorMetricDuplicates(t *testing.T) {
 		})
 		assert.Error(t, err)
 	})
+
+	t.Run("constant and variable label name overlap", func(t *testing.T) {
+		_, err = r.NewCounterVector(Opts{
+			Name:           "user_error_label_overlaps",
+			Help:           "help",
+			Labels:         Labels{"foo": "one"},
+			VariableLabels: []string{"foo"},
+		})
+		assert.Error(t, err)
+	})
 }
 
 func TestLabeledPrecedence(t *testing.T) {

@@ -74,6 +74,9 @@ func newMetadata(o Opts) (metadata, error) {
 		if _, ok := varNameSet[scrubbedName]; ok {
 			return metadata{}, fmt.Errorf("duplicate variable label name %q", scrubbedName)
 		}
+		if _, ok := constNameSet[scrubbedName]; ok {
+			return metadata{}, fmt.Errorf("variable label name %q is also a constant label name", scrubbedName)
+		}
 		varNameSet[scrubbedName] = struct{}{}
 		sortedScrubbedVarNames[i] = scrubbedName
 	}
