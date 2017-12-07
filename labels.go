@@ -269,24 +269,3 @@ func scrubLabelValue(s string) string {
 	d.free()
 	return scrubbed
 }
-
-func areValidLabelValues(ss []string) bool {
-	for _, s := range ss {
-		if !IsValidLabelValue(s) {
-			return false
-		}
-	}
-	return true
-}
-
-func scrubLabelValues(ss []string) []string {
-	if areValidLabelValues(ss) {
-		return ss
-	}
-
-	scrubbed := make([]string, len(ss))
-	for i, dirty := range ss {
-		scrubbed[i] = scrubLabelValue(dirty)
-	}
-	return scrubbed
-}
