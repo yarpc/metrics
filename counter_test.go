@@ -29,6 +29,7 @@ import (
 
 func TestCounter(t *testing.T) {
 	r, c := New()
+	r = r.Labeled(Labels{"service": "users"})
 
 	t.Run("duplicate constant label names", func(t *testing.T) {
 		_, err := r.NewCounter(Opts{
@@ -56,7 +57,7 @@ func TestCounter(t *testing.T) {
 		require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
 		assert.Equal(t, SimpleSnapshot{
 			Name:   "test_counter",
-			Labels: Labels{"foo": "bar"},
+			Labels: Labels{"foo": "bar", "service": "users"},
 			Value:  3,
 		}, snap.Counters[0], "Unexpected counter snapshot.")
 	})
