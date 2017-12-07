@@ -21,11 +21,15 @@
 package metrics
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 
 	promproto "github.com/prometheus/client_model/go"
 )
+
+// Match the Prometheus error text.
+var errInconsistentCardinality = errors.New("inconsistent label cardinality")
 
 // metadata stores our internal representation of metric options. Adding this
 // layer of indirection between the user-facing options and the metric
@@ -94,6 +98,47 @@ func newMetadata(o Opts) (metadata, error) {
 		constPairs:         pairs,
 		variableLabelNames: o.VariableLabels, // preserve user-defined order
 	}, nil
+}
+
+//  merges variable and constant labels.
+func (m metadata) MergeLabels(variableLabels []string) []*promproto.LabelPair {
+	if len(variableLabels) == 0 {
+		return m.constPairs
+	}
+	n := len(m.constPairs) + len(m.variableLabelNames)
+	pairs := make([]*promproto.LabelPair, 0, n)
+	pairs = append(pairs, m.constPairs...)
+	for i := range m.variableLabelNames { // user-supplied order was preserved
+		name := scrubName(m.variableLabelNames[i])
+		val := scrubLabelValue(variableLabels[i*2+1])
+		pairs = append(pairs, &promproto.LabelPair{
+			Name:  &name,
+			Value: &val,
+		})
+	}
+	sort.Slice(pairs, func(i, j int) bool {
+		return pairs[i].GetName() < pairs[j].GetName()
+	})
+	return pairs
+}
+
+// ValidateVariableLabels checks that the user-supplied variable label names
+// and values match the options supplied at vector creation.
+func (m metadata) ValidateVariableLabels(variableLabels []string) error {
+	if len(variableLabels) != 2*len(m.variableLabelNames) {
+		return errInconsistentCardinality
+	}
+	for i, expected := range m.variableLabelNames { // user-supplied order was preserved
+		if expected != variableLabels[i*2] {
+			return fmt.Errorf(
+				"variable label %d doesn't match vector definition: expected %s, got %s",
+				i,
+				expected,
+				variableLabels[i*2],
+			)
+		}
+	}
+	return nil
 }
 
 // writeID writes the metric's ID to the supplied digester. Since we only use
