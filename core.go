@@ -64,7 +64,7 @@ func (c *coreRegistry) register(m metric) error {
 	c.Lock()
 	if existing, ok := c.dimsByName[*meta.Name]; ok && existing != meta.Dims {
 		c.Unlock()
-		return fmt.Errorf("a metric with name %q and the same label "+
+		return fmt.Errorf("a metric with name %q and different label "+
 			"names is already registered", *meta.Name)
 	}
 	if _, ok := c.ids[string(id.digest())]; ok {
