@@ -22,7 +22,6 @@ package metrics
 
 import (
 	"bytes"
-	"errors"
 	"sort"
 	"sync"
 
@@ -37,14 +36,9 @@ const (
 	DefaultLabelValue = "default"
 )
 
-var (
-	// Match the Prometheus error message.
-	errInconsistentCardinality = errors.New("inconsistent label cardinality")
-
-	_digesterPool = sync.Pool{New: func() interface{} {
-		return &digester{make([]byte, 0, 128)}
-	}}
-)
+var _digesterPool = sync.Pool{New: func() interface{} {
+	return &digester{make([]byte, 0, 128)}
+}}
 
 // A digester creates a null-delimited byte slice from a series of variable
 // label values. It's an efficient way to create map keys from metric names and
