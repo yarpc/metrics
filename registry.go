@@ -104,7 +104,7 @@ func (r *Registry) NewHistogram(opts HistogramOpts) (*Histogram, error) {
 	if err != nil {
 		return nil, err
 	}
-	h := newHistogram(meta)
+	h := newHistogram(meta, opts.Unit, opts.Buckets)
 	if err := r.core.register(h); err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func (r *Registry) NewHistogramVector(opts HistogramOpts) (*HistogramVector, err
 	if err != nil {
 		return nil, err
 	}
-	hv := newHistogramVector(meta)
+	hv := newHistogramVector(meta, opts.Unit, opts.Buckets)
 	if err := r.core.register(hv); err != nil {
 		return nil, err
 	}
