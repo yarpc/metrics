@@ -300,3 +300,72 @@ func TestVectorMetricDuplicates(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestLabeledPrecedence(t *testing.T) {
+	r, c := New()
+	r = r.Labeled(Labels{"foo": "bar"}).Labeled(Labels{"foo": "baz"})
+	_, err := r.NewCounter(Opts{
+		Name: "test_counter",
+		Help: "help",
+	})
+	require.NoError(t, err, "Failed to create counter.")
+	snap := c.Snapshot()
+	require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
+	assert.Equal(t, SimpleSnapshot{
+		Name:   "test_counter",
+		Labels: Labels{"foo": "baz"},
+	}, snap.Counters[0], "Unexpected counter snapshot.")
+}
+
+func TestLabeledAutoScrubbing(t *testing.T) {
+	r, c := New()
+	r = r.Labeled(Labels{
+		"invalid-prometheus-name": "foo",
+		"tally":                   "invalid!value",
+		"valid":                   "ok",
+	})
+	vec, err := r.NewCounterVector(Opts{
+		Name:           "test_counter",
+		Help:           "help",
+		VariableLabels: []string{"invalid_var_name!"},
+	})
+	vec.MustGet("invalid_var_name!", "ok").Inc()
+
+	require.NoError(t, err, "Failed to create counter.")
+	snap := c.Snapshot()
+	require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
+	assert.Equal(t, SimpleSnapshot{
+		Name: "test_counter",
+		Labels: Labels{
+			"invalid_prometheus_name": "foo",
+			"tally":                   "invalid_value",
+			"valid":                   "ok",
+			"invalid_var_name_":       "ok",
+		},
+		Value: 1,
+	}, snap.Counters[0], "Unexpected counter snapshot.")
+}
+
+func TestLabelScrubbingUniqueness(t *testing.T) {
+	t.Run("duplicate const names", func(t *testing.T) {
+		r, _ := New()
+		_, err := r.NewCounter(Opts{
+			Name: "test",
+			Help: "help",
+			Labels: Labels{
+				"foo_bar": "baz",
+				"foo!bar": "baz",
+			},
+		})
+		assert.Error(t, err, "Expected error when scrubbing duplicates label names.")
+	})
+	t.Run("duplicate variable names", func(t *testing.T) {
+		r, _ := New()
+		_, err := r.NewCounterVector(Opts{
+			Name:           "test",
+			Help:           "help",
+			VariableLabels: []string{"foo_bar", "foo!bar"},
+		})
+		assert.Error(t, err, "Expected error when scrubbing duplicates label names.")
+	})
+}

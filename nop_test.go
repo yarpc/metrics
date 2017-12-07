@@ -54,6 +54,7 @@ func TestNopHistogramVector(t *testing.T) {
 
 func TestNopRegistry(t *testing.T) {
 	var r *Registry
+	r = r.Labeled(Labels{"foo": "bar"})
 	c, err := r.NewCounter(Opts{})
 	assert.NoError(t, err, "Error calling NewCounter on nil Registry.")
 	assertNopCounter(t, c)
