@@ -20,15 +20,47 @@
 
 package metrics
 
-import "go.uber.org/net/metrics/push"
+import (
+	"time"
 
-// New constructs a Registry and Controller.
-func New() (*Registry, *Controller) {
-	core := newCoreRegistry()
-	return newRegistry(core, Labels{}), newController(core)
+	"go.uber.org/net/metrics/push"
+)
+
+type pusher struct {
+	core    *coreRegistry
+	stop    chan struct{}
+	stopped chan struct{}
+	ticker  *time.Ticker
+	target  push.Target
 }
 
-type metric interface {
-	describe() metadata
-	push(push.Target)
+func newPusher(c *coreRegistry, target push.Target, tick time.Duration) *pusher {
+	return &pusher{
+		core:    c,
+		stop:    make(chan struct{}),
+		stopped: make(chan struct{}),
+		ticker:  time.NewTicker(tick),
+		target:  target,
+	}
+}
+
+func (p *pusher) Start() {
+	defer close(p.stopped)
+	// When stopping, do one last export to catch any stragglers.
+	defer p.core.push(p.target)
+
+	for {
+		select {
+		case <-p.stop:
+			return
+		case <-p.ticker.C:
+			p.core.push(p.target)
+		}
+	}
+}
+
+func (p *pusher) Stop() {
+	p.ticker.Stop()
+	close(p.stop)
+	<-p.stopped
 }

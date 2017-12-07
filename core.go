@@ -23,6 +23,8 @@ package metrics
 import (
 	"fmt"
 	"sync"
+
+	"go.uber.org/net/metrics/push"
 )
 
 const _defaultCollectionSize = 128
@@ -89,4 +91,12 @@ func (c *coreRegistry) snapshot() *Snapshot {
 	}
 	s.sort()
 	return s
+}
+
+func (c *coreRegistry) push(target push.Target) {
+	c.RLock()
+	for _, m := range c.metrics {
+		m.push(target)
+	}
+	c.RUnlock()
 }
