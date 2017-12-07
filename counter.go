@@ -66,6 +66,10 @@ func (c *Counter) describe() metadata {
 	return c.meta
 }
 
+func (c *Counter) snapshot() SimpleSnapshot {
+	return SimpleSnapshot{}
+}
+
 // A CounterVector is a collection of Counters that share a name and some
 // constant labels, but also have a consistent set of variable labels.
 // All exported methods are safe to use concurrently.
@@ -109,4 +113,8 @@ func (cv *CounterVector) MustGet(variableLabels ...string) *Counter {
 
 func (cv *CounterVector) describe() metadata {
 	return cv.meta
+}
+
+func (cv *CounterVector) snapshot() []SimpleSnapshot {
+	return nil
 }

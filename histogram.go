@@ -54,6 +54,10 @@ func (h *Histogram) describe() metadata {
 	return h.meta
 }
 
+func (h *Histogram) snapshot() HistogramSnapshot {
+	return HistogramSnapshot{}
+}
+
 // A HistogramVector is a collection of Histograms that share a name and some
 // constant labels, but also have a consistent set of variable labels. All
 // exported methods are safe to use concurrently.
@@ -97,4 +101,8 @@ func (hv *HistogramVector) MustGet(variableLabels ...string) *Histogram {
 
 func (hv *HistogramVector) describe() metadata {
 	return hv.meta
+}
+
+func (hv *HistogramVector) snapshot() []HistogramSnapshot {
+	return nil
 }

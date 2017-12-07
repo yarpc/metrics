@@ -23,7 +23,7 @@ package metrics
 // New constructs a Registry and Controller.
 func New() (*Registry, *Controller) {
 	core := newCoreRegistry()
-	return newRegistry(core, Labels{}), nil
+	return newRegistry(core, Labels{}), newController(core)
 }
 
 type metric interface {

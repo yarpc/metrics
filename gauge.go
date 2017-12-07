@@ -98,6 +98,10 @@ func (g *Gauge) describe() metadata {
 	return g.meta
 }
 
+func (g *Gauge) snapshot() SimpleSnapshot {
+	return SimpleSnapshot{}
+}
+
 // A GaugeVector is a collection of Gauges that share a name and some constant
 // labels, but also have a consistent set of variable labels. All exported
 // methods are safe to use concurrently.
@@ -141,4 +145,8 @@ func (gv *GaugeVector) MustGet(variableLabels ...string) *Gauge {
 
 func (gv *GaugeVector) describe() metadata {
 	return gv.meta
+}
+
+func (gv *GaugeVector) snapshot() []SimpleSnapshot {
+	return nil
 }
