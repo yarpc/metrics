@@ -29,11 +29,15 @@ import (
 //
 // Nil *Counters are safe no-op implementations.
 type Counter struct {
-	meta metadata
+	val value
 }
 
 func newCounter(m metadata) *Counter {
-	return &Counter{m}
+	return &Counter{val: newValue(m)}
+}
+
+func newDynamicCounter(m metadata, variableLabels []string) metric {
+	return &Counter{val: newDynamicValue(m, variableLabels)}
 }
 
 // Add increases the value of the counter and returns the new value. Since
@@ -43,7 +47,10 @@ func (c *Counter) Add(n int64) int64 {
 	if c == nil {
 		return 0
 	}
-	return 0
+	if n <= 0 {
+		return c.val.Load()
+	}
+	return c.val.Add(n)
 }
 
 // Inc increments the counter's value by one and returns the new value.
@@ -51,7 +58,7 @@ func (c *Counter) Inc() int64 {
 	if c == nil {
 		return 0
 	}
-	return 0
+	return c.val.Inc()
 }
 
 // Load returns the counter's current value.
@@ -59,15 +66,15 @@ func (c *Counter) Load() int64 {
 	if c == nil {
 		return 0
 	}
-	return 0
+	return c.val.Load()
 }
 
 func (c *Counter) describe() metadata {
-	return c.meta
+	return c.val.meta
 }
 
 func (c *Counter) snapshot() SimpleSnapshot {
-	return SimpleSnapshot{}
+	return c.val.snapshot()
 }
 
 // A CounterVector is a collection of Counters that share a name and some
@@ -79,11 +86,15 @@ func (c *Counter) snapshot() SimpleSnapshot {
 // For a general description of vector types, see the package-level
 // documentation.
 type CounterVector struct {
-	meta metadata
+	vector
 }
 
 func newCounterVector(m metadata) *CounterVector {
-	return &CounterVector{m}
+	return &CounterVector{vector{
+		meta:    m,
+		factory: newDynamicCounter,
+		metrics: make(map[string]metric, _defaultCollectionSize),
+	}}
 }
 
 // Get retrieves the counter with the supplied variable label names and values
@@ -95,7 +106,11 @@ func (cv *CounterVector) Get(variableLabels ...string) (*Counter, error) {
 	if cv == nil {
 		return nil, nil
 	}
-	return nil, nil
+	m, err := cv.getOrCreate(variableLabels...)
+	if err != nil {
+		return nil, err
+	}
+	return m.(*Counter), nil
 }
 
 // MustGet behaves exactly like Get, but panics on errors. If code using this
@@ -113,8 +128,4 @@ func (cv *CounterVector) MustGet(variableLabels ...string) *Counter {
 
 func (cv *CounterVector) describe() metadata {
 	return cv.meta
-}
-
-func (cv *CounterVector) snapshot() []SimpleSnapshot {
-	return nil
 }
