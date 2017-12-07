@@ -131,7 +131,7 @@ func (m metadata) ValidateVariableLabels(variableLabels []string) error {
 	for i, expected := range m.variableLabelNames { // user-supplied order was preserved
 		if expected != variableLabels[i*2] {
 			return fmt.Errorf(
-				"variable label %d doesn't match vector definition: expected %s, got %s",
+				"variable label #%d doesn't match vector definition: expected %s, got %s",
 				i,
 				expected,
 				variableLabels[i*2],
