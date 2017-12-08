@@ -58,7 +58,7 @@ func TestGauge(t *testing.T) {
 		assert.True(t, gauge.CAS(42, 43), "Unexpected return value from CAS.")
 		snap := c.Snapshot()
 		require.Equal(t, 1, len(snap.Gauges), "Unexpected number of gauges.")
-		assert.Equal(t, SimpleSnapshot{
+		assert.Equal(t, Snapshot{
 			Name:   "test_gauge",
 			Labels: Labels{"foo": "bar", "service": "users"},
 			Value:  43,

@@ -95,10 +95,10 @@ func (c *coreRegistry) register(m metric) error {
 	return nil
 }
 
-func (c *coreRegistry) snapshot() *Snapshot {
+func (c *coreRegistry) snapshot() *RegistrySnapshot {
 	c.RLock()
 	defer c.RUnlock()
-	s := &Snapshot{}
+	s := &RegistrySnapshot{}
 	for _, m := range c.metrics {
 		s.add(m)
 	}

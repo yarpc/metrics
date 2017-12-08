@@ -55,7 +55,7 @@ func TestCounter(t *testing.T) {
 
 		snap := c.Snapshot()
 		require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
-		assert.Equal(t, SimpleSnapshot{
+		assert.Equal(t, Snapshot{
 			Name:   "test_counter",
 			Labels: Labels{"foo": "bar", "service": "users"},
 			Value:  3,
@@ -80,7 +80,7 @@ func TestCounterVector(t *testing.T) {
 		snap := c.Snapshot()
 		require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
 		got := snap.Counters[0]
-		assert.Equal(t, SimpleSnapshot{
+		assert.Equal(t, Snapshot{
 			Name:   "test_counter",
 			Labels: Labels{"var": expectedLabel},
 			Value:  expectedCount,

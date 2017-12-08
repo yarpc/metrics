@@ -110,7 +110,7 @@ func (g *Gauge) describe() metadata {
 	return g.val.meta
 }
 
-func (g *Gauge) snapshot() SimpleSnapshot {
+func (g *Gauge) snapshot() Snapshot {
 	return g.val.snapshot()
 }
 

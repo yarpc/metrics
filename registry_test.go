@@ -352,7 +352,7 @@ func TestLabeledPrecedence(t *testing.T) {
 	require.NoError(t, err, "Failed to create counter.")
 	snap := c.Snapshot()
 	require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
-	assert.Equal(t, SimpleSnapshot{
+	assert.Equal(t, Snapshot{
 		Name:   "test_counter",
 		Labels: Labels{"foo": "baz"},
 	}, snap.Counters[0], "Unexpected counter snapshot.")
@@ -375,7 +375,7 @@ func TestLabeledAutoScrubbing(t *testing.T) {
 	require.NoError(t, err, "Failed to create counter.")
 	snap := c.Snapshot()
 	require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
-	assert.Equal(t, SimpleSnapshot{
+	assert.Equal(t, Snapshot{
 		Name: "test_counter",
 		Labels: Labels{
 			"invalid_prometheus_name": "foo",
