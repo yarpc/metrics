@@ -38,31 +38,31 @@ type target struct {
 	tally.Scope
 }
 
-func (tp *target) NewCounter(opts push.Opts) push.Counter {
+func (tp *target) NewCounter(spec push.Spec) push.Counter {
 	return &counter{
-		Counter: tp.Tagged(opts.Labels).Counter(opts.Name),
+		Counter: tp.Tagged(spec.Labels).Counter(spec.Name),
 	}
 }
 
-func (tp *target) NewGauge(opts push.Opts) push.Gauge {
-	return &gauge{tp.Tagged(opts.Labels).Gauge(opts.Name)}
+func (tp *target) NewGauge(spec push.Spec) push.Gauge {
+	return &gauge{tp.Tagged(spec.Labels).Gauge(spec.Name)}
 }
 
-func (tp *target) NewHistogram(opts push.HistogramOpts) push.Histogram {
-	buckets := make([]float64, len(opts.Buckets))
-	for i := range opts.Buckets {
-		if opts.Buckets[i] == math.MaxInt64 {
+func (tp *target) NewHistogram(spec push.HistogramSpec) push.Histogram {
+	buckets := make([]float64, len(spec.Buckets))
+	for i := range spec.Buckets {
+		if spec.Buckets[i] == math.MaxInt64 {
 			buckets[i] = math.MaxFloat64
 		} else {
-			buckets[i] = float64(opts.Buckets[i])
+			buckets[i] = float64(spec.Buckets[i])
 		}
 	}
 	return &latency{
-		Histogram: tp.Tagged(opts.Labels).Histogram(
-			opts.Name,
+		Histogram: tp.Tagged(spec.Labels).Histogram(
+			spec.Name,
 			tally.ValueBuckets(buckets),
 		),
-		lasts: make(map[int64]int64, len(opts.Buckets)),
+		lasts: make(map[int64]int64, len(spec.Buckets)),
 	}
 }
 

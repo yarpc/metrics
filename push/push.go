@@ -28,20 +28,20 @@ package push // import "go.uber.org/net/metrics/push"
 // A concrete implementation of this interface that works with StatsD and M3
 // is available in the go.uber.org/net/metrics/tallypush package.
 type Target interface {
-	NewCounter(Opts) Counter
-	NewGauge(Opts) Gauge
-	NewHistogram(HistogramOpts) Histogram
+	NewCounter(Spec) Counter
+	NewGauge(Spec) Gauge
+	NewHistogram(HistogramSpec) Histogram
 }
 
-// Opts configure counters and gauges.
-type Opts struct {
+// A Spec configures counters and gauges.
+type Spec struct {
 	Name   string
 	Labels map[string]string
 }
 
-// HistogramOpts configure histograms.
-type HistogramOpts struct {
-	Opts
+// A HistogramSpec configures histograms.
+type HistogramSpec struct {
+	Spec
 
 	Buckets []int64 // upper bounds, inclusive
 }

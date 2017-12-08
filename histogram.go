@@ -178,8 +178,8 @@ func (h *Histogram) push(target push.Target) {
 		return
 	}
 	if h.pusher == nil {
-		h.pusher = target.NewHistogram(push.HistogramOpts{
-			Opts: push.Opts{
+		h.pusher = target.NewHistogram(push.HistogramSpec{
+			Spec: push.Spec{
 				Name:   *h.meta.Name,
 				Labels: zip(h.labelPairs),
 			},
