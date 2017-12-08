@@ -23,8 +23,10 @@ package metrics
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/net/metrics/push"
 
 	"go.uber.org/atomic"
@@ -36,12 +38,21 @@ type Controller struct {
 	*coreRegistry
 
 	pushing atomic.Bool // can only push to one target
+	handler http.Handler
 }
 
 func newController(core *coreRegistry) *Controller {
 	return &Controller{
 		coreRegistry: core,
+		handler: promhttp.HandlerFor(core.gatherer, promhttp.HandlerOpts{
+			ErrorHandling: promhttp.HTTPErrorOnError, // 500 on errors
+		}),
 	}
+}
+
+// ServeHTTP implements http.Handler.
+func (c *Controller) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	c.handler.ServeHTTP(w, req)
 }
 
 // Snapshot returns a point-in-time view of all the metrics contained in the

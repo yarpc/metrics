@@ -1,0 +1,33 @@
+# HELP test_counter counter help
+# TYPE test_counter counter
+test_counter{foo="counter",service="users"} 1
+# HELP test_counter_vector counter vector help
+# TYPE test_counter_vector counter
+test_counter_vector{baz="bazval",foo="counter_vector",quux="quuxval",service="users"} 1
+test_counter_vector{baz="bazval2",foo="counter_vector",quux="quuxval2",service="users"} 1
+# HELP test_gauge gauge help
+# TYPE test_gauge gauge
+test_gauge{foo="gauge",service="users"} 42
+# HELP test_gauge_vector gauge vector help
+# TYPE test_gauge_vector gauge
+test_gauge_vector{baz="bazval",foo="gauge_vector",quux="quuxval",service="users"} 10
+test_gauge_vector{baz="bazval2",foo="gauge_vector",quux="quuxval2",service="users"} 20
+# HELP test_histogram histogram help
+# TYPE test_histogram histogram
+test_histogram_bucket{foo="histogram",service="users",le="1000"} 1
+test_histogram_bucket{foo="histogram",service="users",le="60000"} 1
+test_histogram_bucket{foo="histogram",service="users",le="+Inf"} 1
+test_histogram_sum{foo="histogram",service="users"} 1
+test_histogram_count{foo="histogram",service="users"} 1
+# HELP test_histogram_vector histogram vector help
+# TYPE test_histogram_vector histogram
+test_histogram_vector_bucket{baz="bazval",foo="histogram_vector",quux="quuxval",service="users",le="1000"} 1
+test_histogram_vector_bucket{baz="bazval",foo="histogram_vector",quux="quuxval",service="users",le="60000"} 1
+test_histogram_vector_bucket{baz="bazval",foo="histogram_vector",quux="quuxval",service="users",le="+Inf"} 1
+test_histogram_vector_sum{baz="bazval",foo="histogram_vector",quux="quuxval",service="users"} 1
+test_histogram_vector_count{baz="bazval",foo="histogram_vector",quux="quuxval",service="users"} 1
+test_histogram_vector_bucket{baz="bazval2",foo="histogram_vector",quux="quuxval2",service="users",le="1000"} 1
+test_histogram_vector_bucket{baz="bazval2",foo="histogram_vector",quux="quuxval2",service="users",le="60000"} 1
+test_histogram_vector_bucket{baz="bazval2",foo="histogram_vector",quux="quuxval2",service="users",le="+Inf"} 1
+test_histogram_vector_sum{baz="bazval2",foo="histogram_vector",quux="quuxval2",service="users"} 1
+test_histogram_vector_count{baz="bazval2",foo="histogram_vector",quux="quuxval2",service="users"} 1
