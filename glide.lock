@@ -1,5 +1,5 @@
-hash: 2dd8e8108a36dd47b2709f757eebd60ee467ae38fcb45dd4e7ea212f8667aad9
-updated: 2017-12-07T16:49:55.122981158-08:00
+hash: 71009677ef9a1b5cd311d9f5bca9962e36e46b48c12251821cab08142db3028a
+updated: 2017-12-07T20:56:46.115138961-08:00
 imports:
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
@@ -34,17 +34,10 @@ imports:
   version: a6e9df898b1336106c743392c48ee0b71f5c4efa
   subpackages:
   - xfs
-- name: github.com/stretchr/testify
-  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
-  subpackages:
-  - assert
-  - require
 - name: github.com/uber-go/tally
   version: 6c4631652c6aab57c64f65c2e0aaec2e9aae3a64
 - name: go.uber.org/atomic
   version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8
-- name: go.uber.org/multierr
-  version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 testImports:
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
@@ -54,3 +47,8 @@ testImports:
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  subpackages:
+  - assert
+  - require
