@@ -20,25 +20,5 @@
 
 package metrics
 
-import (
-	promproto "github.com/prometheus/client_model/go"
-	"go.uber.org/net/metrics/push"
-)
-
-// An Option configures registries and controllers. Currently, there are no
-// exported Options.
-type Option interface {
-	unimplemented()
-}
-
-// New constructs a Registry and Controller.
-func New(opts ...Option) (*Registry, *Controller) {
-	core := newCoreRegistry()
-	return newRegistry(core, Labels{}), newController(core)
-}
-
-type metric interface {
-	describe() metadata
-	proto() *promproto.MetricFamily
-	push(push.Target)
-}
+// Version is exported for runtime compatibility checks.
+const Version = "0.1.0"

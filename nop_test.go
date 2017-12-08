@@ -55,27 +55,27 @@ func TestNopHistogramVector(t *testing.T) {
 func TestNopRegistry(t *testing.T) {
 	var r *Registry
 	r = r.Labeled(Labels{"foo": "bar"})
-	c, err := r.NewCounter(Opts{})
+	c, err := r.NewCounter(Spec{})
 	assert.NoError(t, err, "Error calling NewCounter on nil Registry.")
 	assertNopCounter(t, c)
 
-	cv, err := r.NewCounterVector(Opts{})
+	cv, err := r.NewCounterVector(Spec{})
 	assert.NoError(t, err, "Error calling NewCounterVector on nil Registry.")
 	assertNopCounterVector(t, cv)
 
-	g, err := r.NewGauge(Opts{})
+	g, err := r.NewGauge(Spec{})
 	assert.NoError(t, err, "Error calling NewGauge on nil Registry.")
 	assertNopGauge(t, g)
 
-	gv, err := r.NewGaugeVector(Opts{})
+	gv, err := r.NewGaugeVector(Spec{})
 	assert.NoError(t, err, "Error calling NewGaugeVector on nil Registry.")
 	assertNopGaugeVector(t, gv)
 
-	h, err := r.NewHistogram(HistogramOpts{})
+	h, err := r.NewHistogram(HistogramSpec{})
 	assert.NoError(t, err, "Error calling NewHistogram on nil Registry.")
 	assertNopHistogram(t, h)
 
-	hv, err := r.NewHistogramVector(HistogramOpts{})
+	hv, err := r.NewHistogramVector(HistogramSpec{})
 	assertNopHistogramVector(t, hv)
 }
 
