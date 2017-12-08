@@ -22,7 +22,9 @@ package metrics
 
 import (
 	"fmt"
+	"sort"
 
+	promproto "github.com/prometheus/client_model/go"
 	"go.uber.org/net/metrics/push"
 )
 
@@ -112,6 +114,23 @@ func (g *Gauge) snapshot() SimpleSnapshot {
 	return g.val.snapshot()
 }
 
+func (g *Gauge) proto() *promproto.MetricFamily {
+	return &promproto.MetricFamily{
+		Name:   g.val.meta.Name,
+		Help:   g.val.meta.Help,
+		Type:   promproto.MetricType_GAUGE.Enum(),
+		Metric: []*promproto.Metric{g.metric()},
+	}
+}
+
+func (g *Gauge) metric() *promproto.Metric {
+	n := float64(g.val.Load())
+	return &promproto.Metric{
+		Label: g.val.labelPairs,
+		Gauge: &promproto.Gauge{Value: &n},
+	}
+}
+
 func (g *Gauge) push(target push.Target) {
 	if g.val.meta.DisablePush {
 		return
@@ -176,4 +195,23 @@ func (gv *GaugeVector) MustGet(variableLabels ...string) *Gauge {
 
 func (gv *GaugeVector) describe() metadata {
 	return gv.meta
+}
+
+func (gv *GaugeVector) proto() *promproto.MetricFamily {
+	mf := &promproto.MetricFamily{
+		Name: gv.meta.Name,
+		Help: gv.meta.Help,
+		Type: promproto.MetricType_GAUGE.Enum(),
+	}
+	gv.metricsMu.RLock()
+	protos := make([]*promproto.Metric, 0, len(gv.metrics))
+	for _, metric := range gv.metrics {
+		protos = append(protos, metric.(*Gauge).metric())
+	}
+	gv.metricsMu.RUnlock()
+	sort.Slice(protos, func(i, j int) bool {
+		return protos[i].String() < protos[j].String()
+	})
+	mf.Metric = protos
+	return mf
 }

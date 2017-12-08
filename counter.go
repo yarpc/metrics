@@ -22,7 +22,9 @@ package metrics
 
 import (
 	"fmt"
+	"sort"
 
+	promproto "github.com/prometheus/client_model/go"
 	"go.uber.org/net/metrics/push"
 )
 
@@ -78,6 +80,23 @@ func (c *Counter) describe() metadata {
 
 func (c *Counter) snapshot() SimpleSnapshot {
 	return c.val.snapshot()
+}
+
+func (c *Counter) proto() *promproto.MetricFamily {
+	return &promproto.MetricFamily{
+		Name:   c.val.meta.Name,
+		Help:   c.val.meta.Help,
+		Type:   promproto.MetricType_COUNTER.Enum(),
+		Metric: []*promproto.Metric{c.metric()},
+	}
+}
+
+func (c *Counter) metric() *promproto.Metric {
+	n := float64(c.val.Load())
+	return &promproto.Metric{
+		Label:   c.val.labelPairs,
+		Counter: &promproto.Counter{Value: &n},
+	}
 }
 
 func (c *Counter) push(target push.Target) {
@@ -144,4 +163,23 @@ func (cv *CounterVector) MustGet(variableLabels ...string) *Counter {
 
 func (cv *CounterVector) describe() metadata {
 	return cv.meta
+}
+
+func (cv *CounterVector) proto() *promproto.MetricFamily {
+	mf := &promproto.MetricFamily{
+		Name: cv.meta.Name,
+		Help: cv.meta.Help,
+		Type: promproto.MetricType_COUNTER.Enum(),
+	}
+	cv.metricsMu.RLock()
+	protos := make([]*promproto.Metric, 0, len(cv.metrics))
+	for _, metric := range cv.metrics {
+		protos = append(protos, metric.(*Counter).metric())
+	}
+	cv.metricsMu.RUnlock()
+	sort.Slice(protos, func(i, j int) bool {
+		return protos[i].String() < protos[j].String()
+	})
+	mf.Metric = protos
+	return mf
 }

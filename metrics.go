@@ -20,7 +20,10 @@
 
 package metrics
 
-import "go.uber.org/net/metrics/push"
+import (
+	promproto "github.com/prometheus/client_model/go"
+	"go.uber.org/net/metrics/push"
+)
 
 // New constructs a Registry and Controller.
 func New() (*Registry, *Controller) {
@@ -30,5 +33,6 @@ func New() (*Registry, *Controller) {
 
 type metric interface {
 	describe() metadata
+	proto() *promproto.MetricFamily
 	push(push.Target)
 }

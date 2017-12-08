@@ -24,6 +24,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
+	promproto "github.com/prometheus/client_model/go"
 	"go.uber.org/net/metrics/push"
 )
 
@@ -46,14 +48,25 @@ type coreRegistry struct {
 	dimsByName map[string]string
 	ids        map[string]struct{}
 	metrics    []metric
+	gatherer   prometheus.Gatherer
 }
 
 func newCoreRegistry() *coreRegistry {
-	return &coreRegistry{
+	c := &coreRegistry{
 		dimsByName: make(map[string]string, _defaultCollectionSize),
 		ids:        make(map[string]struct{}, _defaultCollectionSize),
 		metrics:    make([]metric, 0, _defaultCollectionSize),
 	}
+	c.gatherer = prometheus.GathererFunc(func() ([]*promproto.MetricFamily, error) {
+		c.RLock()
+		protos := make([]*promproto.MetricFamily, 0, len(c.metrics))
+		for _, m := range c.metrics {
+			protos = append(protos, m.proto())
+		}
+		c.RUnlock()
+		return protos, nil
+	})
+	return c
 }
 
 func (c *coreRegistry) register(m metric) error {

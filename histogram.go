@@ -23,6 +23,7 @@ package metrics
 import (
 	"fmt"
 	"math"
+	"sort"
 	"sync"
 	"time"
 
@@ -134,6 +135,42 @@ func (h *Histogram) observations() []int64 {
 		}
 	}
 	return obs
+}
+
+func (h *Histogram) proto() *promproto.MetricFamily {
+	return &promproto.MetricFamily{
+		Name:   h.meta.Name,
+		Help:   h.meta.Help,
+		Type:   promproto.MetricType_HISTOGRAM.Enum(),
+		Metric: []*promproto.Metric{h.metric()},
+	}
+}
+
+func (h *Histogram) metric() *promproto.Metric {
+	n := uint64(0)
+	promBuckets := make([]*promproto.Bucket, 0, len(h.buckets)-1)
+	for _, b := range h.buckets {
+		n += uint64(b.Load())
+		if b.upper == math.MaxInt64 {
+			// Prometheus doesn't want us to export the final catch-all bucket.
+			continue
+		}
+		upper := float64(b.upper)
+		promBuckets = append(promBuckets, &promproto.Bucket{
+			CumulativeCount: &n,
+			UpperBound:      &upper,
+		})
+	}
+
+	sum := float64(h.sum.Load())
+	return &promproto.Metric{
+		Label: h.labelPairs,
+		Histogram: &promproto.Histogram{
+			SampleCount: &n,
+			SampleSum:   &sum,
+			Bucket:      promBuckets,
+		},
+	}
 }
 
 func (h *Histogram) push(target push.Target) {
@@ -254,6 +291,25 @@ func (hv *HistogramVector) snapshot() []HistogramSnapshot {
 		snaps = append(snaps, h.snapshot())
 	}
 	return snaps
+}
+
+func (hv *HistogramVector) proto() *promproto.MetricFamily {
+	hv.histogramsMu.RLock()
+	protos := make([]*promproto.Metric, 0, len(hv.histograms))
+	for _, h := range hv.histograms {
+		protos = append(protos, h.metric())
+	}
+	hv.histogramsMu.RUnlock()
+	sort.Slice(protos, func(i, j int) bool {
+		return protos[i].String() < protos[j].String()
+	})
+
+	return &promproto.MetricFamily{
+		Name:   hv.meta.Name,
+		Help:   hv.meta.Help,
+		Type:   promproto.MetricType_HISTOGRAM.Enum(),
+		Metric: protos,
+	}
 }
 
 func (hv *HistogramVector) push(target push.Target) {
