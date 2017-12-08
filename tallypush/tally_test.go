@@ -39,7 +39,7 @@ func newScope() tally.TestScope {
 func TestCounter(t *testing.T) {
 	scope := newScope()
 	target := New(scope)
-	c := target.NewCounter(push.Opts{
+	c := target.NewCounter(push.Spec{
 		Name:   "test_counter",
 		Labels: metrics.Labels{"foo": "bar"},
 	})
@@ -53,7 +53,7 @@ func TestCounter(t *testing.T) {
 func TestGauge(t *testing.T) {
 	scope := newScope()
 	target := New(scope)
-	g := target.NewGauge(push.Opts{
+	g := target.NewGauge(push.Spec{
 		Name:   "test_gauge",
 		Labels: metrics.Labels{"foo": "bar"},
 	})
@@ -67,8 +67,8 @@ func TestGauge(t *testing.T) {
 func TestHistogram(t *testing.T) {
 	scope := newScope()
 	target := New(scope)
-	h := target.NewHistogram(push.HistogramOpts{
-		Opts:    push.Opts{Name: "test_histogram", Labels: metrics.Labels{"foo": "bar"}},
+	h := target.NewHistogram(push.HistogramSpec{
+		Spec:    push.Spec{Name: "test_histogram", Labels: metrics.Labels{"foo": "bar"}},
 		Buckets: []int64{5, 10, math.MaxInt64},
 	})
 	h.Set(5, 1)
