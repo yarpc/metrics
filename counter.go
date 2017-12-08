@@ -78,7 +78,7 @@ func (c *Counter) describe() metadata {
 	return c.val.meta
 }
 
-func (c *Counter) snapshot() SimpleSnapshot {
+func (c *Counter) snapshot() Snapshot {
 	return c.val.snapshot()
 }
 

@@ -25,23 +25,22 @@ import (
 	"time"
 )
 
-// A SimpleSnapshot is a point-in-time snapshot of the state of any
-// non-histogram metric.
-type SimpleSnapshot struct {
+// A Snapshot is a point-in-time view of the state of any non-histogram
+// metric.
+type Snapshot struct {
 	Name   string
 	Labels Labels
 	Value  int64
 }
 
-func (s SimpleSnapshot) less(other SimpleSnapshot) bool {
+func (s Snapshot) less(other Snapshot) bool {
 	if s.Name != other.Name {
 		return s.Name < other.Name
 	}
 	return s.Labels.less(other.Labels)
 }
 
-// A HistogramSnapshot is a point-in-time snapshot of the state of a
-// Histogram.
+// A HistogramSnapshot is a point-in-time view of the state of a Histogram.
 type HistogramSnapshot struct {
 	Name   string
 	Labels Labels
@@ -56,15 +55,15 @@ func (l HistogramSnapshot) less(other HistogramSnapshot) bool {
 	return l.Labels.less(other.Labels)
 }
 
-// A Snapshot exposes all the metrics contained in a Registry. It's useful in
-// tests, but shouldn't be used in production code.
-type Snapshot struct {
-	Counters   []SimpleSnapshot
-	Gauges     []SimpleSnapshot
+// A RegistrySnapshot exposes all the metrics contained in a Registry. It's
+// useful in tests, but shouldn't be used in production code.
+type RegistrySnapshot struct {
+	Counters   []Snapshot
+	Gauges     []Snapshot
 	Histograms []HistogramSnapshot
 }
 
-func (s *Snapshot) sort() {
+func (s *RegistrySnapshot) sort() {
 	sort.Slice(s.Counters, func(i, j int) bool {
 		return s.Counters[i].less(s.Counters[j])
 	})
@@ -76,7 +75,7 @@ func (s *Snapshot) sort() {
 	})
 }
 
-func (s *Snapshot) add(m metric) {
+func (s *RegistrySnapshot) add(m metric) {
 	switch v := m.(type) {
 	case *Counter:
 		s.Counters = append(s.Counters, v.snapshot())

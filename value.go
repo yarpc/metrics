@@ -51,8 +51,8 @@ func newDynamicValue(m metadata, variableLabels []string) value {
 	}
 }
 
-func (v value) snapshot() SimpleSnapshot {
-	return SimpleSnapshot{
+func (v value) snapshot() Snapshot {
+	return Snapshot{
 		Name:   *v.meta.Name,
 		Labels: zip(v.labelPairs),
 		Value:  v.Load(),
@@ -106,10 +106,10 @@ func (vec *vector) newValue(key []byte, variableLabels []string) (metric, error)
 	return m, nil
 }
 
-func (vec *vector) snapshot() []SimpleSnapshot {
+func (vec *vector) snapshot() []Snapshot {
 	vec.metricsMu.RLock()
 	defer vec.metricsMu.RUnlock()
-	snaps := make([]SimpleSnapshot, 0, len(vec.metrics))
+	snaps := make([]Snapshot, 0, len(vec.metrics))
 	for _, m := range vec.metrics {
 		switch v := m.(type) {
 		case *Counter:
