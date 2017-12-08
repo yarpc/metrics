@@ -31,8 +31,8 @@ import (
 // Match the Prometheus error text.
 var errInconsistentCardinality = errors.New("inconsistent label cardinality")
 
-// metadata stores our internal representation of metric options. Adding this
-// layer of indirection between the user-facing options and the metric
+// metadata stores our internal representation of metric specs. Adding this
+// layer of indirection between the user-facing specs and the metric
 // constructors serves two purposes: it centralizes the logic for calculating
 // a variety of derived values, and it lets the remainder of the package
 // assume that all user-supplied data has already been fully validated.
@@ -45,7 +45,7 @@ type metadata struct {
 	variableLabelNames []string // unscrubbed
 }
 
-func newMetadata(o Opts) (metadata, error) {
+func newMetadata(o Spec) (metadata, error) {
 	// TODO: Consider checking for duplicate labels with Bloom filters,
 	// allocating maps only if we suspect a duplicate.
 	sortedConstNames := make([]string, 0, len(o.Labels))
@@ -126,7 +126,7 @@ func (m metadata) MergeLabels(variableLabels []string) []*promproto.LabelPair {
 }
 
 // ValidateVariableLabels checks that the user-supplied variable label names
-// and values match the options supplied at vector creation.
+// and values match the spec supplied at vector creation.
 func (m metadata) ValidateVariableLabels(variableLabels []string) error {
 	if len(variableLabels) != 2*len(m.variableLabelNames) {
 		return errInconsistentCardinality

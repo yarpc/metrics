@@ -27,8 +27,8 @@ import (
 	"time"
 )
 
-// Opts configure Counters, Gauges, CounterVectors, and GaugeVectors.
-type Opts struct {
+// A Spec configures Counters, Gauges, CounterVectors, and GaugeVectors.
+type Spec struct {
 	Name           string
 	Help           string
 	Labels         Labels
@@ -36,39 +36,39 @@ type Opts struct {
 	DisablePush    bool
 }
 
-func (o Opts) validate() error {
-	if len(o.Name) == 0 {
+func (s Spec) validate() error {
+	if len(s.Name) == 0 {
 		return errors.New("all metrics must have a name")
 	}
-	if o.Help == "" {
+	if s.Help == "" {
 		return errors.New("metric help must not be empty")
 	}
 	return nil
 }
 
-func (o Opts) validateScalar() error {
-	if err := o.validate(); err != nil {
+func (s Spec) validateScalar() error {
+	if err := s.validate(); err != nil {
 		return err
 	}
-	if len(o.VariableLabels) > 0 {
+	if len(s.VariableLabels) > 0 {
 		return errors.New("only vectors may have variable labels")
 	}
 	return nil
 }
 
-func (o Opts) validateVector() error {
-	if err := o.validate(); err != nil {
+func (s Spec) validateVector() error {
+	if err := s.validate(); err != nil {
 		return err
 	}
-	if len(o.VariableLabels) == 0 {
+	if len(s.VariableLabels) == 0 {
 		return errors.New("vectors must have variable labels")
 	}
 	return nil
 }
 
-// HistogramOpts configure Histograms and HistogramVectors.
-type HistogramOpts struct {
-	Opts
+// A HistogramSpec configures Histograms and HistogramVectors.
+type HistogramSpec struct {
+	Spec
 
 	// Durations are exported to Prometheus as simple numbers, not strings or
 	// rich objects. Unit specifies the desired granularity for latency
@@ -82,29 +82,29 @@ type HistogramOpts struct {
 	Buckets []int64
 }
 
-func (ho HistogramOpts) validateScalar() error {
-	if err := ho.validateLatencies(); err != nil {
+func (hs HistogramSpec) validateScalar() error {
+	if err := hs.validateLatencies(); err != nil {
 		return err
 	}
-	return ho.Opts.validateScalar()
+	return hs.Spec.validateScalar()
 }
 
-func (ho HistogramOpts) validateVector() error {
-	if err := ho.validateLatencies(); err != nil {
+func (hs HistogramSpec) validateVector() error {
+	if err := hs.validateLatencies(); err != nil {
 		return err
 	}
-	return ho.Opts.validateVector()
+	return hs.Spec.validateVector()
 }
 
-func (ho HistogramOpts) validateLatencies() error {
-	if ho.Unit < 1 {
-		return fmt.Errorf("duration unit must be positive, got %v", ho.Unit)
+func (hs HistogramSpec) validateLatencies() error {
+	if hs.Unit < 1 {
+		return fmt.Errorf("duration unit must be positive, got %v", hs.Unit)
 	}
-	if len(ho.Buckets) == 0 {
+	if len(hs.Buckets) == 0 {
 		return fmt.Errorf("must specify some buckets")
 	}
 	prev := int64(math.MinInt64)
-	for _, upper := range ho.Buckets {
+	for _, upper := range hs.Buckets {
 		if upper <= prev {
 			return fmt.Errorf("bucket upper bounds must be sorted in increasing order")
 		}

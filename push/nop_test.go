@@ -24,7 +24,7 @@ import "testing"
 
 func TestNop(t *testing.T) {
 	target := NewNop()
-	target.NewCounter(Opts{}).Set(1)
-	target.NewGauge(Opts{}).Set(1)
-	target.NewHistogram(HistogramOpts{}).Set(1, 1)
+	target.NewCounter(Spec{}).Set(1)
+	target.NewGauge(Spec{}).Set(1)
+	target.NewHistogram(HistogramSpec{}).Set(1, 1)
 }

@@ -41,7 +41,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Controller {
 	root, controller := New()
 	reg := root.Labeled(Labels{"service": "users"})
 
-	counter, err := reg.NewCounter(Opts{
+	counter, err := reg.NewCounter(Spec{
 		Name:        "test_counter",
 		Help:        "counter help",
 		Labels:      Labels{"foo": "counter"},
@@ -50,7 +50,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Controller {
 	require.NoError(t, err, "Failed to create counter.")
 	counter.Inc()
 
-	counterVec, err := reg.NewCounterVector(Opts{
+	counterVec, err := reg.NewCounterVector(Spec{
 		Name:           "test_counter_vector",
 		Help:           "counter vector help",
 		Labels:         Labels{"foo": "counter_vector"},
@@ -67,7 +67,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Controller {
 		"baz", "bazval2",
 	).Inc()
 
-	gauge, err := reg.NewGauge(Opts{
+	gauge, err := reg.NewGauge(Spec{
 		Name:        "test_gauge",
 		Help:        "gauge help",
 		Labels:      Labels{"foo": "gauge"},
@@ -76,7 +76,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Controller {
 	require.NoError(t, err, "Failed to create gauge.")
 	gauge.Store(42)
 
-	gaugeVec, err := reg.NewGaugeVector(Opts{
+	gaugeVec, err := reg.NewGaugeVector(Spec{
 		Name:           "test_gauge_vector",
 		Help:           "gauge vector help",
 		Labels:         Labels{"foo": "gauge_vector"},
@@ -93,8 +93,8 @@ func initializeMetrics(t testing.TB, disablePush bool) *Controller {
 		"baz", "bazval2",
 	).Store(20)
 
-	hist, err := reg.NewHistogram(HistogramOpts{
-		Opts: Opts{
+	hist, err := reg.NewHistogram(HistogramSpec{
+		Spec: Spec{
 			Name:        "test_histogram",
 			Help:        "histogram help",
 			Labels:      Labels{"foo": "histogram"},
@@ -106,8 +106,8 @@ func initializeMetrics(t testing.TB, disablePush bool) *Controller {
 	require.NoError(t, err, "Failed to create histogram.")
 	hist.Observe(time.Millisecond)
 
-	histVec, err := reg.NewHistogramVector(HistogramOpts{
-		Opts: Opts{
+	histVec, err := reg.NewHistogramVector(HistogramSpec{
+		Spec: Spec{
 			Name:           "test_histogram_vector",
 			Help:           "histogram vector help",
 			Labels:         Labels{"foo": "histogram_vector"},

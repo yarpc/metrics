@@ -136,7 +136,7 @@ func (g *Gauge) push(target push.Target) {
 		return
 	}
 	if g.pusher == nil {
-		g.pusher = target.NewGauge(push.Opts{
+		g.pusher = target.NewGauge(push.Spec{
 			Name:   *g.val.meta.Name,
 			Labels: zip(g.val.labelPairs),
 		})

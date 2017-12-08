@@ -25,9 +25,9 @@ type nop struct{}
 // NewNop returns a no-op Target.
 func NewNop() Target { return &nop{} }
 
-func (n *nop) NewCounter(Opts) Counter              { return n }
-func (n *nop) NewGauge(Opts) Gauge                  { return n }
-func (n *nop) NewHistogram(HistogramOpts) Histogram { return &nopHistogram{} }
+func (n *nop) NewCounter(Spec) Counter              { return n }
+func (n *nop) NewGauge(Spec) Gauge                  { return n }
+func (n *nop) NewHistogram(HistogramSpec) Histogram { return &nopHistogram{} }
 func (n *nop) Set(int64)                            {}
 
 type nopHistogram struct{}

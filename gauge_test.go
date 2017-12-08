@@ -32,16 +32,16 @@ func TestGauge(t *testing.T) {
 	r = r.Labeled(Labels{"service": "users"})
 
 	t.Run("duplicate constant labels", func(t *testing.T) {
-		_, err := r.NewGauge(Opts{
+		_, err := r.NewGauge(Spec{
 			Name:   "test_gauge",
 			Help:   "help",
 			Labels: Labels{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate label names
 		})
-		assert.Error(t, err, "Expected an error constructing a gauge with invalid options.")
+		assert.Error(t, err, "Expected an error constructing a gauge with invalid spec.")
 	})
 
-	t.Run("valid opts", func(t *testing.T) {
-		gauge, err := r.NewGauge(Opts{
+	t.Run("valid spec", func(t *testing.T) {
+		gauge, err := r.NewGauge(Spec{
 			Name:   "test_gauge",
 			Help:   "Some help.",
 			Labels: Labels{"foo": "bar"},
@@ -69,12 +69,12 @@ func TestGauge(t *testing.T) {
 func TestGaugeVector(t *testing.T) {
 	newVector := func() (*GaugeVector, *Controller) {
 		r, c := New()
-		opts := Opts{
+		spec := Spec{
 			Name:           "test_gauge",
 			Help:           "Some help.",
 			VariableLabels: []string{"var"},
 		}
-		vec, err := r.NewGaugeVector(opts)
+		vec, err := r.NewGaugeVector(spec)
 		require.NoError(t, err, "Unexpected error constructing vector.")
 		return vec, c
 	}
@@ -125,21 +125,21 @@ func TestGaugeVectorConstructionErrors(t *testing.T) {
 	r, _ := New()
 
 	t.Run("duplicate constant label names", func(t *testing.T) {
-		_, err := r.NewGaugeVector(Opts{
+		_, err := r.NewGaugeVector(Spec{
 			Name:           "test_gauge",
 			Help:           "help",
 			Labels:         Labels{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate label names
 			VariableLabels: []string{"var"},
 		})
-		assert.Error(t, err, "Expected an error constructing a gauge vector with invalid options.")
+		assert.Error(t, err, "Expected an error constructing a gauge vector with invalid spec.")
 	})
 
 	t.Run("duplicate variable label names", func(t *testing.T) {
-		_, err := r.NewGaugeVector(Opts{
+		_, err := r.NewGaugeVector(Spec{
 			Name:           "test_gauge",
 			Help:           "help",
 			VariableLabels: []string{"var", "var"},
 		})
-		assert.Error(t, err, "Expected an error constructing a gauge vector with invalid options.")
+		assert.Error(t, err, "Expected an error constructing a gauge vector with invalid spec.")
 	})
 }

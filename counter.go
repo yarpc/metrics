@@ -104,7 +104,7 @@ func (c *Counter) push(target push.Target) {
 		return
 	}
 	if c.pusher == nil {
-		c.pusher = target.NewCounter(push.Opts{
+		c.pusher = target.NewCounter(push.Spec{
 			Name:   *c.val.meta.Name,
 			Labels: zip(c.val.labelPairs),
 		})

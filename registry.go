@@ -52,15 +52,15 @@ func (r *Registry) Labeled(ls Labels) *Registry {
 }
 
 // NewCounter constructs a new Counter.
-func (r *Registry) NewCounter(opts Opts) (*Counter, error) {
+func (r *Registry) NewCounter(spec Spec) (*Counter, error) {
 	if r == nil {
 		return nil, nil
 	}
-	opts = r.addConstLabels(opts)
-	if err := opts.validateScalar(); err != nil {
+	spec = r.addConstLabels(spec)
+	if err := spec.validateScalar(); err != nil {
 		return nil, err
 	}
-	meta, err := newMetadata(opts)
+	meta, err := newMetadata(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -72,15 +72,15 @@ func (r *Registry) NewCounter(opts Opts) (*Counter, error) {
 }
 
 // NewGauge constructs a new Gauge.
-func (r *Registry) NewGauge(opts Opts) (*Gauge, error) {
+func (r *Registry) NewGauge(spec Spec) (*Gauge, error) {
 	if r == nil {
 		return nil, nil
 	}
-	opts = r.addConstLabels(opts)
-	if err := opts.validateScalar(); err != nil {
+	spec = r.addConstLabels(spec)
+	if err := spec.validateScalar(); err != nil {
 		return nil, err
 	}
-	meta, err := newMetadata(opts)
+	meta, err := newMetadata(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -92,19 +92,19 @@ func (r *Registry) NewGauge(opts Opts) (*Gauge, error) {
 }
 
 // NewHistogram constructs a new Histogram.
-func (r *Registry) NewHistogram(opts HistogramOpts) (*Histogram, error) {
+func (r *Registry) NewHistogram(spec HistogramSpec) (*Histogram, error) {
 	if r == nil {
 		return nil, nil
 	}
-	opts.Opts = r.addConstLabels(opts.Opts)
-	if err := opts.validateScalar(); err != nil {
+	spec.Spec = r.addConstLabels(spec.Spec)
+	if err := spec.validateScalar(); err != nil {
 		return nil, err
 	}
-	meta, err := newMetadata(opts.Opts)
+	meta, err := newMetadata(spec.Spec)
 	if err != nil {
 		return nil, err
 	}
-	h := newHistogram(meta, opts.Unit, opts.Buckets)
+	h := newHistogram(meta, spec.Unit, spec.Buckets)
 	if err := r.core.register(h); err != nil {
 		return nil, err
 	}
@@ -112,15 +112,15 @@ func (r *Registry) NewHistogram(opts HistogramOpts) (*Histogram, error) {
 }
 
 // NewCounterVector constructs a new CounterVector.
-func (r *Registry) NewCounterVector(opts Opts) (*CounterVector, error) {
+func (r *Registry) NewCounterVector(spec Spec) (*CounterVector, error) {
 	if r == nil {
 		return nil, nil
 	}
-	opts = r.addConstLabels(opts)
-	if err := opts.validateVector(); err != nil {
+	spec = r.addConstLabels(spec)
+	if err := spec.validateVector(); err != nil {
 		return nil, err
 	}
-	meta, err := newMetadata(opts)
+	meta, err := newMetadata(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -132,15 +132,15 @@ func (r *Registry) NewCounterVector(opts Opts) (*CounterVector, error) {
 }
 
 // NewGaugeVector constructs a new GaugeVector.
-func (r *Registry) NewGaugeVector(opts Opts) (*GaugeVector, error) {
+func (r *Registry) NewGaugeVector(spec Spec) (*GaugeVector, error) {
 	if r == nil {
 		return nil, nil
 	}
-	opts = r.addConstLabels(opts)
-	if err := opts.validateVector(); err != nil {
+	spec = r.addConstLabels(spec)
+	if err := spec.validateVector(); err != nil {
 		return nil, err
 	}
-	meta, err := newMetadata(opts)
+	meta, err := newMetadata(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -152,36 +152,36 @@ func (r *Registry) NewGaugeVector(opts Opts) (*GaugeVector, error) {
 }
 
 // NewHistogramVector constructs a new HistogramVector.
-func (r *Registry) NewHistogramVector(opts HistogramOpts) (*HistogramVector, error) {
+func (r *Registry) NewHistogramVector(spec HistogramSpec) (*HistogramVector, error) {
 	if r == nil {
 		return nil, nil
 	}
-	opts.Opts = r.addConstLabels(opts.Opts)
-	if err := opts.validateVector(); err != nil {
+	spec.Spec = r.addConstLabels(spec.Spec)
+	if err := spec.validateVector(); err != nil {
 		return nil, err
 	}
-	meta, err := newMetadata(opts.Opts)
+	meta, err := newMetadata(spec.Spec)
 	if err != nil {
 		return nil, err
 	}
-	hv := newHistogramVector(meta, opts.Unit, opts.Buckets)
+	hv := newHistogramVector(meta, spec.Unit, spec.Buckets)
 	if err := r.core.register(hv); err != nil {
 		return nil, err
 	}
 	return hv, nil
 }
 
-func (r *Registry) addConstLabels(opts Opts) Opts {
+func (r *Registry) addConstLabels(spec Spec) Spec {
 	if len(r.constLabels) == 0 {
-		return opts
+		return spec
 	}
-	labels := make(Labels, len(r.constLabels)+len(opts.Labels))
+	labels := make(Labels, len(r.constLabels)+len(spec.Labels))
 	for k, v := range r.constLabels {
 		labels[k] = v
 	}
-	for k, v := range opts.Labels {
+	for k, v := range spec.Labels {
 		labels[k] = v
 	}
-	opts.Labels = labels
-	return opts
+	spec.Labels = labels
+	return spec
 }
