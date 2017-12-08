@@ -34,8 +34,8 @@ func TestHistogram(t *testing.T) {
 	r = r.Labeled(Labels{"service": "users"})
 
 	t.Run("duplicate constant label names", func(t *testing.T) {
-		_, err := r.NewHistogram(HistogramOpts{
-			Opts: Opts{
+		_, err := r.NewHistogram(HistogramSpec{
+			Spec: Spec{
 				Name:   "test_latency_ns",
 				Help:   "Some help.",
 				Labels: Labels{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate names
@@ -43,12 +43,12 @@ func TestHistogram(t *testing.T) {
 			Unit:    time.Nanosecond,
 			Buckets: []int64{10, 50, 100},
 		})
-		assert.Error(t, err, "Expected an error constructing a histogram with invalid options.")
+		assert.Error(t, err, "Expected an error constructing a histogram with invalid spec.")
 	})
 
-	t.Run("valid opts", func(t *testing.T) {
-		h, err := r.NewHistogram(HistogramOpts{
-			Opts: Opts{
+	t.Run("valid spec", func(t *testing.T) {
+		h, err := r.NewHistogram(HistogramSpec{
+			Spec: Spec{
 				Name:   "test_latency_ns",
 				Help:   "Some help.",
 				Labels: Labels{"foo": "bar"},
@@ -79,14 +79,14 @@ func TestHistogram(t *testing.T) {
 func TestHistogramVector(t *testing.T) {
 	tests := []struct {
 		desc string
-		opts HistogramOpts
-		f    func(testing.TB, *Registry, HistogramOpts)
+		spec HistogramSpec
+		f    func(testing.TB, *Registry, HistogramSpec)
 		want HistogramSnapshot
 	}{
 		{
 			desc: "valid labels",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:           "test_latency_ms",
 					Help:           "Some help.",
 					VariableLabels: []string{"var"},
@@ -94,8 +94,8 @@ func TestHistogramVector(t *testing.T) {
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
 			},
-			f: func(t testing.TB, r *Registry, opts HistogramOpts) {
-				vec, err := r.NewHistogramVector(opts)
+			f: func(t testing.TB, r *Registry, spec HistogramSpec) {
+				vec, err := r.NewHistogramVector(spec)
 				require.NoError(t, err, "Unexpected error constructing vector.")
 				h, err := vec.Get("var", "x")
 				require.NoError(t, err, "Unexpected error getting a counter with correct number of labels.")
@@ -111,8 +111,8 @@ func TestHistogramVector(t *testing.T) {
 		},
 		{
 			desc: "invalid labels",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:           "test_latency_ms",
 					Help:           "Some help.",
 					VariableLabels: []string{"var"},
@@ -120,8 +120,8 @@ func TestHistogramVector(t *testing.T) {
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
 			},
-			f: func(t testing.TB, r *Registry, opts HistogramOpts) {
-				vec, err := r.NewHistogramVector(opts)
+			f: func(t testing.TB, r *Registry, spec HistogramSpec) {
+				vec, err := r.NewHistogramVector(spec)
 				require.NoError(t, err, "Unexpected error constructing vector.")
 				h, err := vec.Get("var", "x!")
 				require.NoError(t, err, "Unexpected error getting a counter with correct number of labels.")
@@ -137,8 +137,8 @@ func TestHistogramVector(t *testing.T) {
 		},
 		{
 			desc: "wrong number of label values",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:           "test_latency_ms",
 					Help:           "Some help.",
 					VariableLabels: []string{"var"},
@@ -146,8 +146,8 @@ func TestHistogramVector(t *testing.T) {
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
 			},
-			f: func(t testing.TB, r *Registry, opts HistogramOpts) {
-				vec, err := r.NewHistogramVector(opts)
+			f: func(t testing.TB, r *Registry, spec HistogramSpec) {
+				vec, err := r.NewHistogramVector(spec)
 				require.NoError(t, err, "Unexpected error constructing vector.")
 				_, err = vec.Get("var", "x", "var2", "y")
 				require.Error(t, err, "Unexpected success calling Get with incorrect number of labels.")
@@ -163,7 +163,7 @@ func TestHistogramVector(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			r, c := New()
-			tt.f(t, r, tt.opts)
+			tt.f(t, r, tt.spec)
 			snap := c.Snapshot()
 			if tt.want.Name != "" {
 				require.Equal(t, 1, len(snap.Histograms), "Unexpected number of histogram snapshots.")
@@ -179,8 +179,8 @@ func TestHistogramVectorIndependence(t *testing.T) {
 	// Ensure that we're not erroneously sharing state across histograms in a
 	// vector.
 	r, c := New()
-	opts := HistogramOpts{
-		Opts: Opts{
+	spec := HistogramSpec{
+		Spec: Spec{
 			Name:           "test_latency_ms",
 			Help:           "Some help.",
 			VariableLabels: []string{"var"},
@@ -188,7 +188,7 @@ func TestHistogramVectorIndependence(t *testing.T) {
 		Unit:    time.Millisecond,
 		Buckets: []int64{1000},
 	}
-	vec, err := r.NewHistogramVector(opts)
+	vec, err := r.NewHistogramVector(spec)
 	require.NoError(t, err, "Unexpected error constructing vector.")
 
 	x, err := vec.Get("var", "x")
