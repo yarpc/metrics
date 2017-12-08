@@ -27,16 +27,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOptsValidation(t *testing.T) {
+func TestSpecValidation(t *testing.T) {
 	tests := []struct {
 		desc     string
-		opts     Opts
+		spec     Spec
 		scalarOK bool
 		vecOK    bool
 	}{
 		{
 			desc: "valid names",
-			opts: Opts{
+			spec: Spec{
 				Name: "fOo123",
 				Help: "Some help.",
 			},
@@ -45,7 +45,7 @@ func TestOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid names & constant labels",
-			opts: Opts{
+			spec: Spec{
 				Name:   "foo",
 				Help:   "Some help.",
 				Labels: Labels{"foo": "bar"},
@@ -55,7 +55,7 @@ func TestOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "name with Tally-forbidden characters",
-			opts: Opts{
+			spec: Spec{
 				Name: "foo:bar",
 				Help: "Some help.",
 			},
@@ -64,7 +64,7 @@ func TestOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "no name",
-			opts: Opts{
+			spec: Spec{
 				Help: "Some help.",
 			},
 			scalarOK: false,
@@ -72,7 +72,7 @@ func TestOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "no help",
-			opts: Opts{
+			spec: Spec{
 				Name: "foo",
 			},
 			scalarOK: false,
@@ -80,7 +80,7 @@ func TestOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid names but invalid label key",
-			opts: Opts{
+			spec: Spec{
 				Name:   "foo",
 				Help:   "Some help.",
 				Labels: Labels{"foo:foo": "bar"},
@@ -90,7 +90,7 @@ func TestOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid names but invalid label value",
-			opts: Opts{
+			spec: Spec{
 				Name:   "foo",
 				Help:   "Some help.",
 				Labels: Labels{"foo": "bar:bar"},
@@ -100,7 +100,7 @@ func TestOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid names & variable labels",
-			opts: Opts{
+			spec: Spec{
 				Name:           "foo",
 				Help:           "Some help.",
 				VariableLabels: []string{"baz"},
@@ -110,7 +110,7 @@ func TestOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid names, constant labels, & variable labels",
-			opts: Opts{
+			spec: Spec{
 				Name:           "foo",
 				Help:           "Some help.",
 				Labels:         Labels{"foo": "bar"},
@@ -121,7 +121,7 @@ func TestOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid names & constant labels, but invalid variable labels",
-			opts: Opts{
+			spec: Spec{
 				Name:           "foo",
 				Help:           "Some help.",
 				Labels:         Labels{"foo": "bar"},
@@ -135,30 +135,30 @@ func TestOptsValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			if tt.scalarOK {
-				assertScalarOptsOK(t, tt.opts)
+				assertScalarSpecOK(t, tt.spec)
 			} else {
-				assertScalarOptsFail(t, tt.opts)
+				assertScalarSpecFail(t, tt.spec)
 			}
 			if tt.vecOK {
-				assertVectorOptsOK(t, tt.opts)
+				assertVectorSpecOK(t, tt.spec)
 			} else {
-				assertVectorOptsFail(t, tt.opts)
+				assertVectorSpecFail(t, tt.spec)
 			}
 		})
 	}
 }
 
-func TestHistogramOptsValidation(t *testing.T) {
+func TestHistogramSpecValidation(t *testing.T) {
 	tests := []struct {
 		desc     string
-		opts     HistogramOpts
+		spec     HistogramSpec
 		scalarOK bool
 		vecOK    bool
 	}{
 		{
 			desc: "valid names",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name: "fOo123",
 					Help: "Some help.",
 				},
@@ -170,8 +170,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid names & constant labels",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:   "foo",
 					Help:   "Some help.",
 					Labels: Labels{"foo": "bar"},
@@ -184,8 +184,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "name with Tally-forbidden characters",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name: "foo:bar",
 					Help: "Some help.",
 				},
@@ -197,8 +197,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "no name",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Help: "Some help.",
 				},
 				Unit:    time.Millisecond,
@@ -209,8 +209,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "no help",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name: "foo",
 				},
 				Unit:    time.Millisecond,
@@ -221,8 +221,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid names but invalid label key",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:   "foo",
 					Help:   "Some help.",
 					Labels: Labels{"foo:foo": "bar"},
@@ -235,8 +235,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid names but invalid label value",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:   "foo",
 					Help:   "Some help.",
 					Labels: Labels{"foo": "bar:bar"},
@@ -249,8 +249,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid names & variable labels",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:           "foo",
 					Help:           "Some help.",
 					VariableLabels: []string{"baz"},
@@ -263,8 +263,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid names, constant labels, & variable labels",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:           "foo",
 					Help:           "Some help.",
 					Labels:         Labels{"foo": "bar"},
@@ -278,8 +278,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid names & constant labels, but invalid variable labels",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:           "foo",
 					Help:           "Some help.",
 					Labels:         Labels{"foo": "bar"},
@@ -293,8 +293,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid labels, no unit",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:           "foo",
 					Help:           "Some help.",
 					Labels:         Labels{"foo": "bar"},
@@ -307,8 +307,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid labels, negative unit",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:           "foo",
 					Help:           "Some help.",
 					Labels:         Labels{"foo": "bar"},
@@ -322,8 +322,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid labels, no buckets",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:           "foo",
 					Help:           "Some help.",
 					Labels:         Labels{"foo": "bar"},
@@ -336,8 +336,8 @@ func TestHistogramOptsValidation(t *testing.T) {
 		},
 		{
 			desc: "valid labels, buckets out of order",
-			opts: HistogramOpts{
-				Opts: Opts{
+			spec: HistogramSpec{
+				Spec: Spec{
 					Name:           "foo",
 					Help:           "Some help.",
 					Labels:         Labels{"foo": "bar"},
@@ -354,14 +354,14 @@ func TestHistogramOptsValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			if tt.scalarOK {
-				assertScalarHistogramOptsOK(t, tt.opts)
+				assertScalarHistogramSpecOK(t, tt.spec)
 			} else {
-				assertSimpleHistogramOptsFail(t, tt.opts)
+				assertSimpleHistogramSpecFail(t, tt.spec)
 			}
 			if tt.vecOK {
-				assertVectorHistogramOptsOK(t, tt.opts)
+				assertVectorHistogramSpecOK(t, tt.spec)
 			} else {
-				assertVectorHistogramOptsFail(t, tt.opts)
+				assertVectorHistogramSpecFail(t, tt.spec)
 			}
 		})
 	}
@@ -371,54 +371,54 @@ func justRegistry(r *Registry, _ *Controller) *Registry {
 	return r
 }
 
-func assertScalarOptsOK(t testing.TB, opts Opts) {
-	_, err := justRegistry(New()).NewCounter(opts)
+func assertScalarSpecOK(t testing.TB, spec Spec) {
+	_, err := justRegistry(New()).NewCounter(spec)
 	assert.NoError(t, err, "Expected success from NewCounter.")
 
-	_, err = justRegistry(New()).NewGauge(opts)
+	_, err = justRegistry(New()).NewGauge(spec)
 	assert.NoError(t, err, "Expected success from NewGauge.")
 }
 
-func assertScalarOptsFail(t testing.TB, opts Opts) {
-	_, err := justRegistry(New()).NewCounter(opts)
+func assertScalarSpecFail(t testing.TB, spec Spec) {
+	_, err := justRegistry(New()).NewCounter(spec)
 	assert.Error(t, err, "Expected an error from NewCounter.")
 
-	_, err = justRegistry(New()).NewGauge(opts)
+	_, err = justRegistry(New()).NewGauge(spec)
 	assert.Error(t, err, "Expected an error from NewGauge.")
 }
 
-func assertVectorOptsOK(t testing.TB, opts Opts) {
-	_, err := justRegistry(New()).NewCounterVector(opts)
+func assertVectorSpecOK(t testing.TB, spec Spec) {
+	_, err := justRegistry(New()).NewCounterVector(spec)
 	assert.NoError(t, err, "Expected success from NewCounterVector.")
 
-	_, err = justRegistry(New()).NewGaugeVector(opts)
+	_, err = justRegistry(New()).NewGaugeVector(spec)
 	assert.NoError(t, err, "Expected success from NewGaugeVector.")
 }
 
-func assertVectorOptsFail(t testing.TB, opts Opts) {
-	_, err := justRegistry(New()).NewCounterVector(opts)
+func assertVectorSpecFail(t testing.TB, spec Spec) {
+	_, err := justRegistry(New()).NewCounterVector(spec)
 	assert.Error(t, err, "Expected an error from NewCounterVector.")
 
-	_, err = justRegistry(New()).NewGaugeVector(opts)
+	_, err = justRegistry(New()).NewGaugeVector(spec)
 	assert.Error(t, err, "Expected an error from NewGaugeVector.")
 }
 
-func assertScalarHistogramOptsOK(t testing.TB, opts HistogramOpts) {
-	_, err := justRegistry(New()).NewHistogram(opts)
+func assertScalarHistogramSpecOK(t testing.TB, spec HistogramSpec) {
+	_, err := justRegistry(New()).NewHistogram(spec)
 	assert.NoError(t, err, "Expected success from NewLatencies.")
 }
 
-func assertSimpleHistogramOptsFail(t testing.TB, opts HistogramOpts) {
-	_, err := justRegistry(New()).NewHistogram(opts)
+func assertSimpleHistogramSpecFail(t testing.TB, spec HistogramSpec) {
+	_, err := justRegistry(New()).NewHistogram(spec)
 	assert.Error(t, err, "Expected an error from NewLatencies.")
 }
 
-func assertVectorHistogramOptsOK(t testing.TB, opts HistogramOpts) {
-	_, err := justRegistry(New()).NewHistogramVector(opts)
+func assertVectorHistogramSpecOK(t testing.TB, spec HistogramSpec) {
+	_, err := justRegistry(New()).NewHistogramVector(spec)
 	assert.NoError(t, err, "Expected success from NewLatenciesVector.")
 }
 
-func assertVectorHistogramOptsFail(t testing.TB, opts HistogramOpts) {
-	_, err := justRegistry(New()).NewHistogramVector(opts)
+func assertVectorHistogramSpecFail(t testing.TB, spec HistogramSpec) {
+	_, err := justRegistry(New()).NewHistogramVector(spec)
 	assert.Error(t, err, "Expected an error from NewLatenciesVector.")
 }
