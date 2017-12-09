@@ -40,8 +40,8 @@ func TestCounter(t *testing.T) {
 	scope := newScope()
 	target := New(scope)
 	c := target.NewCounter(push.Spec{
-		Name:   "test_counter",
-		Labels: metrics.Labels{"foo": "bar"},
+		Name: "test_counter",
+		Tags: metrics.Tags{"foo": "bar"},
 	})
 	c.Set(10)
 	c.Set(20) // should overwrite previous value
@@ -54,8 +54,8 @@ func TestGauge(t *testing.T) {
 	scope := newScope()
 	target := New(scope)
 	g := target.NewGauge(push.Spec{
-		Name:   "test_gauge",
-		Labels: metrics.Labels{"foo": "bar"},
+		Name: "test_gauge",
+		Tags: metrics.Tags{"foo": "bar"},
 	})
 	g.Set(10)
 	g.Set(20) // should overwrite previous value
@@ -68,7 +68,7 @@ func TestHistogram(t *testing.T) {
 	scope := newScope()
 	target := New(scope)
 	h := target.NewHistogram(push.HistogramSpec{
-		Spec:    push.Spec{Name: "test_histogram", Labels: metrics.Labels{"foo": "bar"}},
+		Spec:    push.Spec{Name: "test_histogram", Tags: metrics.Tags{"foo": "bar"}},
 		Buckets: []int64{5, 10, math.MaxInt64},
 	})
 	h.Set(5, 1)

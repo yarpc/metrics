@@ -39,23 +39,23 @@ import (
 
 func initializeMetrics(t testing.TB, disablePush bool) *Root {
 	root := New()
-	scope := root.Scope().Labeled(Labels{"service": "users"})
+	scope := root.Scope().Tagged(Tags{"service": "users"})
 
 	counter, err := scope.NewCounter(Spec{
 		Name:        "test_counter",
 		Help:        "counter help",
-		Labels:      Labels{"foo": "counter"},
+		ConstTags:   Tags{"foo": "counter"},
 		DisablePush: disablePush,
 	})
 	require.NoError(t, err, "Failed to create counter.")
 	counter.Inc()
 
 	counterVec, err := scope.NewCounterVector(Spec{
-		Name:           "test_counter_vector",
-		Help:           "counter vector help",
-		Labels:         Labels{"foo": "counter_vector"},
-		VariableLabels: []string{"quux", "baz"},
-		DisablePush:    disablePush,
+		Name:        "test_counter_vector",
+		Help:        "counter vector help",
+		ConstTags:   Tags{"foo": "counter_vector"},
+		VarTags:     []string{"quux", "baz"},
+		DisablePush: disablePush,
 	})
 	require.NoError(t, err, "Failed to create counter vector.")
 	counterVec.MustGet(
@@ -70,18 +70,18 @@ func initializeMetrics(t testing.TB, disablePush bool) *Root {
 	gauge, err := scope.NewGauge(Spec{
 		Name:        "test_gauge",
 		Help:        "gauge help",
-		Labels:      Labels{"foo": "gauge"},
+		ConstTags:   Tags{"foo": "gauge"},
 		DisablePush: disablePush,
 	})
 	require.NoError(t, err, "Failed to create gauge.")
 	gauge.Store(42)
 
 	gaugeVec, err := scope.NewGaugeVector(Spec{
-		Name:           "test_gauge_vector",
-		Help:           "gauge vector help",
-		Labels:         Labels{"foo": "gauge_vector"},
-		VariableLabels: []string{"quux", "baz"},
-		DisablePush:    disablePush,
+		Name:        "test_gauge_vector",
+		Help:        "gauge vector help",
+		ConstTags:   Tags{"foo": "gauge_vector"},
+		VarTags:     []string{"quux", "baz"},
+		DisablePush: disablePush,
 	})
 	require.NoError(t, err, "Failed to create gauge vector.")
 	gaugeVec.MustGet(
@@ -97,7 +97,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Root {
 		Spec: Spec{
 			Name:        "test_histogram",
 			Help:        "histogram help",
-			Labels:      Labels{"foo": "histogram"},
+			ConstTags:   Tags{"foo": "histogram"},
 			DisablePush: disablePush,
 		},
 		Unit:    time.Millisecond,
@@ -108,11 +108,11 @@ func initializeMetrics(t testing.TB, disablePush bool) *Root {
 
 	histVec, err := scope.NewHistogramVector(HistogramSpec{
 		Spec: Spec{
-			Name:           "test_histogram_vector",
-			Help:           "histogram vector help",
-			Labels:         Labels{"foo": "histogram_vector"},
-			VariableLabels: []string{"quux", "baz"},
-			DisablePush:    disablePush,
+			Name:        "test_histogram_vector",
+			Help:        "histogram vector help",
+			ConstTags:   Tags{"foo": "histogram_vector"},
+			VarTags:     []string{"quux", "baz"},
+			DisablePush: disablePush,
 		},
 		Unit:    time.Millisecond,
 		Buckets: []int64{1000, 1000 * 60},

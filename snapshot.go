@@ -28,22 +28,22 @@ import (
 // A Snapshot is a point-in-time view of the state of any non-histogram
 // metric.
 type Snapshot struct {
-	Name   string
-	Labels Labels
-	Value  int64
+	Name  string
+	Tags  Tags
+	Value int64
 }
 
 func (s Snapshot) less(other Snapshot) bool {
 	if s.Name != other.Name {
 		return s.Name < other.Name
 	}
-	return s.Labels.less(other.Labels)
+	return s.Tags.less(other.Tags)
 }
 
 // A HistogramSnapshot is a point-in-time view of the state of a Histogram.
 type HistogramSnapshot struct {
 	Name   string
-	Labels Labels
+	Tags   Tags
 	Unit   time.Duration
 	Values []int64 // rounded up to bucket upper bounds
 }
@@ -52,7 +52,7 @@ func (l HistogramSnapshot) less(other HistogramSnapshot) bool {
 	if l.Name != other.Name {
 		return l.Name < other.Name
 	}
-	return l.Labels.less(other.Labels)
+	return l.Tags.less(other.Tags)
 }
 
 // A RootSnapshot exposes all the metrics contained in a Root and all its

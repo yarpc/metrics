@@ -34,10 +34,10 @@ const _defaultCollectionSize = 128
 // A core is a collection of metrics. Uniqueness is enforced with two checks,
 // just like the vanilla Prometheus client:
 //
-// First, any two metrics with the same name must have the same label names
+// First, any two metrics with the same name must have the same tag names
 // (both constant and variable).
 //
-// Second, no two metrics can share the same name and the same constant label
+// Second, no two metrics can share the same name and the same constant tag
 // names and values.
 //
 // The test suite for metric uniqueness is well-commented and explores the
@@ -79,13 +79,13 @@ func (c *core) register(m metric) error {
 	c.Lock()
 	if existing, ok := c.dimsByName[*meta.Name]; ok && existing != meta.Dims {
 		c.Unlock()
-		return fmt.Errorf("a metric with name %q and different label "+
+		return fmt.Errorf("a metric with name %q and different tag "+
 			"names is already registered", *meta.Name)
 	}
 	if _, ok := c.ids[string(id.digest())]; ok {
 		c.Unlock()
 		return fmt.Errorf("a metric with name %q and the same constant "+
-			"label names and values is already registered", *meta.Name)
+			"tag names and values is already registered", *meta.Name)
 	}
 	c.dimsByName[*meta.Name] = meta.Dims
 	c.ids[string(id.digest())] = struct{}{}

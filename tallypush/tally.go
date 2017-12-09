@@ -40,12 +40,12 @@ type target struct {
 
 func (tp *target) NewCounter(spec push.Spec) push.Counter {
 	return &counter{
-		Counter: tp.Tagged(spec.Labels).Counter(spec.Name),
+		Counter: tp.Tagged(spec.Tags).Counter(spec.Name),
 	}
 }
 
 func (tp *target) NewGauge(spec push.Spec) push.Gauge {
-	return &gauge{tp.Tagged(spec.Labels).Gauge(spec.Name)}
+	return &gauge{tp.Tagged(spec.Tags).Gauge(spec.Name)}
 }
 
 func (tp *target) NewHistogram(spec push.HistogramSpec) push.Histogram {
@@ -58,7 +58,7 @@ func (tp *target) NewHistogram(spec push.HistogramSpec) push.Histogram {
 		}
 	}
 	return &latency{
-		Histogram: tp.Tagged(spec.Labels).Histogram(
+		Histogram: tp.Tagged(spec.Tags).Histogram(
 			spec.Name,
 			tally.ValueBuckets(buckets),
 		),

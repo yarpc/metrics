@@ -29,11 +29,11 @@ import (
 )
 
 const (
-	// DefaultLabelName is used in place of empty label names.
-	DefaultLabelName = "default"
+	// DefaultTagName is used in place of empty tag names.
+	DefaultTagName = "default"
 
-	// DefaultLabelValue is used in place of empty label values.
-	DefaultLabelValue = "default"
+	// DefaultTagValue is used in place of empty tag values.
+	DefaultTagValue = "default"
 )
 
 var _digesterPool = sync.Pool{New: func() interface{} {
@@ -41,8 +41,8 @@ var _digesterPool = sync.Pool{New: func() interface{} {
 }}
 
 // A digester creates a null-delimited byte slice from a series of variable
-// label values. It's an efficient way to create map keys from metric names and
-// labels.
+// tag values. It's an efficient way to create map keys from metric names and
+// tags.
 type digester struct {
 	bs []byte
 }
@@ -56,7 +56,7 @@ func newDigester() *digester {
 
 func (d *digester) add(prefix, s string) {
 	if len(d.bs) > 0 {
-		// separate labels with a null byte
+		// separate tags with a null byte
 		d.bs = append(d.bs, '\x00')
 	}
 	d.bs = append(d.bs, prefix...)
@@ -71,11 +71,11 @@ func (d *digester) free() {
 	_digesterPool.Put(d)
 }
 
-// Labels describe the dimensions of a metric.
-type Labels map[string]string
+// Tags describe the dimensions of a metric.
+type Tags map[string]string
 
-func zip(pairs []*promproto.LabelPair) Labels {
-	ls := make(Labels, len(pairs))
+func zip(pairs []*promproto.LabelPair) Tags {
+	ls := make(Tags, len(pairs))
 	for _, pair := range pairs {
 		if pair == nil || pair.Name == nil || pair.Value == nil {
 			continue
@@ -85,10 +85,10 @@ func zip(pairs []*promproto.LabelPair) Labels {
 	return ls
 }
 
-// less provides a stable ordering among label sets.
-func (l Labels) less(other Labels) bool {
+// less provides a stable ordering among tag sets.
+func (t Tags) less(other Tags) bool {
 	left, right := newDigester(), newDigester()
-	l.addToDigester(left)
+	t.addToDigester(left)
 	other.addToDigester(right)
 	cmp := bytes.Compare(left.digest(), right.digest())
 	left.free()
@@ -96,29 +96,29 @@ func (l Labels) less(other Labels) bool {
 	return cmp == -1
 }
 
-func (l Labels) addToDigester(d *digester) {
-	names := make([]string, 0, len(l))
-	for k := range l {
+func (t Tags) addToDigester(d *digester) {
+	names := make([]string, 0, len(t))
+	for k := range t {
 		names = append(names, k)
 	}
 	sort.Strings(names)
 	for _, n := range names {
 		d.add("", n)
-		d.add("", l[n])
+		d.add("", t[n])
 	}
 }
 
-// IsValidName checks whether the supplied string is a valid metric and label
+// IsValidName checks whether the supplied string is a valid metric and tag
 // name in both Prometheus and Tally.
 //
 // Tally and Prometheus each allow runes that the other doesn't, so
 // net/metrics can accept only the common subset. For simplicity, we'd also
-// like the rules for metric names and label names to be the same even if
-// that's more restrictive than absolutely necessary.
+// like the rules for metric names and tag names to be the same even if that's
+// more restrictive than absolutely necessary.
 //
 // Tally allows anything matching the regexp `^[0-9A-z_\-]+$`. Prometheus
 // allows the regexp `^[A-z_:][0-9A-z_:]*$` for metric names, and
-// `^[A-z_][0-9A-z_]*$` for label names.
+// `^[A-z_][0-9A-z_]*$` for tag names.
 //
 // The common subset is `^[A-z_][0-9A-z_]*$`.
 func IsValidName(s string) bool {
@@ -159,14 +159,14 @@ func IsValidName(s string) bool {
 }
 
 // scrubName replaces any invalid runes in the input string with '_'. If the
-// input is already a valid label and metric name (in both Prometheus and
+// input is already a valid tag and metric name (in both Prometheus and
 // Tally), it's returned unchanged.
 func scrubName(s string) string {
 	if IsValidName(s) {
 		return s
 	}
 	if len(s) == 0 {
-		return DefaultLabelName
+		return DefaultTagName
 	}
 
 	d := newDigester()
@@ -202,12 +202,12 @@ func scrubName(s string) string {
 	return scrubbed
 }
 
-// IsValidLabelValue checks whether the supplied string is a valid label value
-// in both Prometheus and Tally.
+// IsValidTagValue checks whether the supplied string is a valid tag value in
+// both Prometheus and Tally.
 //
-// Tally allows label values that match the regexp `^[0-9A-z_\-.]+$`.
-// Prometheus allows any valid UTF-8 string.
-func IsValidLabelValue(s string) bool {
+// Tally allows tag values that match the regexp `^[0-9A-z_\-.]+$`. Prometheus
+// allows any valid UTF-8 string.
+func IsValidTagValue(s string) bool {
 	if len(s) == 0 {
 		return false
 	}
@@ -232,15 +232,15 @@ func IsValidLabelValue(s string) bool {
 	return true
 }
 
-// scrubLabelValue replaces any invalid runes in the input string with '_'. If
-// the input is already a valid label value (in both Prometheus and Tally),
+// scrubTagValue replaces any invalid runes in the input string with '_'. If
+// the input is already a valid tag value (in both Prometheus and Tally),
 // it's returned unchanged.
-func scrubLabelValue(s string) string {
-	if IsValidLabelValue(s) {
+func scrubTagValue(s string) string {
+	if IsValidTagValue(s) {
 		return s
 	}
 	if len(s) == 0 {
-		return DefaultLabelValue
+		return DefaultTagValue
 	}
 
 	d := newDigester()

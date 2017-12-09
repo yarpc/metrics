@@ -35,8 +35,8 @@ type Target interface {
 
 // A Spec configures counters and gauges.
 type Spec struct {
-	Name   string
-	Labels map[string]string
+	Name string
+	Tags map[string]string
 }
 
 // A HistogramSpec configures histograms.

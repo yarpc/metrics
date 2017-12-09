@@ -29,11 +29,11 @@ import (
 
 // A Spec configures Counters, Gauges, CounterVectors, and GaugeVectors.
 type Spec struct {
-	Name           string
-	Help           string
-	Labels         Labels
-	VariableLabels []string // only meaningful for vectors
-	DisablePush    bool
+	Name        string   // required
+	Help        string   // required
+	ConstTags   Tags     // constant tags
+	VarTags     []string // variable tags, only meaningful for vectors
+	DisablePush bool
 }
 
 func (s Spec) validate() error {
@@ -50,8 +50,8 @@ func (s Spec) validateScalar() error {
 	if err := s.validate(); err != nil {
 		return err
 	}
-	if len(s.VariableLabels) > 0 {
-		return errors.New("only vectors may have variable labels")
+	if len(s.VarTags) > 0 {
+		return errors.New("only vectors may have variable tags")
 	}
 	return nil
 }
@@ -60,8 +60,8 @@ func (s Spec) validateVector() error {
 	if err := s.validate(); err != nil {
 		return err
 	}
-	if len(s.VariableLabels) == 0 {
-		return errors.New("vectors must have variable labels")
+	if len(s.VarTags) == 0 {
+		return errors.New("vectors must have variable tags")
 	}
 	return nil
 }

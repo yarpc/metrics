@@ -41,8 +41,8 @@ func newCounter(m metadata) *Counter {
 	return &Counter{val: newValue(m)}
 }
 
-func newDynamicCounter(m metadata, variableLabels []string) metric {
-	return &Counter{val: newDynamicValue(m, variableLabels)}
+func newDynamicCounter(m metadata, variableTagPairs []string) metric {
+	return &Counter{val: newDynamicValue(m, variableTagPairs)}
 }
 
 // Add increases the value of the counter and returns the new value. Since
@@ -94,7 +94,7 @@ func (c *Counter) proto() *promproto.MetricFamily {
 func (c *Counter) metric() *promproto.Metric {
 	n := float64(c.val.Load())
 	return &promproto.Metric{
-		Label:   c.val.labelPairs,
+		Label:   c.val.tagPairs,
 		Counter: &promproto.Counter{Value: &n},
 	}
 }
@@ -105,16 +105,16 @@ func (c *Counter) push(target push.Target) {
 	}
 	if c.pusher == nil {
 		c.pusher = target.NewCounter(push.Spec{
-			Name:   *c.val.meta.Name,
-			Labels: zip(c.val.labelPairs),
+			Name: *c.val.meta.Name,
+			Tags: zip(c.val.tagPairs),
 		})
 	}
 	c.pusher.Set(c.Load())
 }
 
 // A CounterVector is a collection of Counters that share a name and some
-// constant labels, but also have a consistent set of variable labels.
-// All exported methods are safe to use concurrently.
+// constant tags, but also have a consistent set of variable tags. All
+// exported methods are safe to use concurrently.
 //
 // A nil *CounterVector is safe to use, and always returns no-op counters.
 //
@@ -132,16 +132,16 @@ func newCounterVector(m metadata) *CounterVector {
 	}}
 }
 
-// Get retrieves the counter with the supplied variable label names and values
-// from the vector, creating one if necessary. The variable labels must be
+// Get retrieves the counter with the supplied variable tag names and values
+// from the vector, creating one if necessary. The variable tags must be
 // supplied in the same order used when creating the vector.
 //
-// Get returns an error if the number or order of labels is incorrect.
-func (cv *CounterVector) Get(variableLabels ...string) (*Counter, error) {
+// Get returns an error if the number or order of tags is incorrect.
+func (cv *CounterVector) Get(variableTagPairs ...string) (*Counter, error) {
 	if cv == nil {
 		return nil, nil
 	}
-	m, err := cv.getOrCreate(variableLabels)
+	m, err := cv.getOrCreate(variableTagPairs)
 	if err != nil {
 		return nil, err
 	}
@@ -150,11 +150,11 @@ func (cv *CounterVector) Get(variableLabels ...string) (*Counter, error) {
 
 // MustGet behaves exactly like Get, but panics on errors. If code using this
 // method is covered by unit tests, this is safe.
-func (cv *CounterVector) MustGet(variableLabels ...string) *Counter {
+func (cv *CounterVector) MustGet(variableTagPairs ...string) *Counter {
 	if cv == nil {
 		return nil
 	}
-	c, err := cv.Get(variableLabels...)
+	c, err := cv.Get(variableTagPairs...)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get counter: %v", err))
 	}
