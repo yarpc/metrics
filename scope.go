@@ -50,8 +50,8 @@ func (s *Scope) Tagged(tags Tags) *Scope {
 	return newScope(s.core, newTags)
 }
 
-// NewCounter constructs a new Counter.
-func (s *Scope) NewCounter(spec Spec) (*Counter, error) {
+// Counter constructs a new Counter.
+func (s *Scope) Counter(spec Spec) (*Counter, error) {
 	if s == nil {
 		return nil, nil
 	}
@@ -70,8 +70,8 @@ func (s *Scope) NewCounter(spec Spec) (*Counter, error) {
 	return c, nil
 }
 
-// NewGauge constructs a new Gauge.
-func (s *Scope) NewGauge(spec Spec) (*Gauge, error) {
+// Gauge constructs a new Gauge.
+func (s *Scope) Gauge(spec Spec) (*Gauge, error) {
 	if s == nil {
 		return nil, nil
 	}
@@ -90,8 +90,8 @@ func (s *Scope) NewGauge(spec Spec) (*Gauge, error) {
 	return g, nil
 }
 
-// NewHistogram constructs a new Histogram.
-func (s *Scope) NewHistogram(spec HistogramSpec) (*Histogram, error) {
+// Histogram constructs a new Histogram.
+func (s *Scope) Histogram(spec HistogramSpec) (*Histogram, error) {
 	if s == nil {
 		return nil, nil
 	}
@@ -110,8 +110,8 @@ func (s *Scope) NewHistogram(spec HistogramSpec) (*Histogram, error) {
 	return h, nil
 }
 
-// NewCounterVector constructs a new CounterVector.
-func (s *Scope) NewCounterVector(spec Spec) (*CounterVector, error) {
+// CounterVector constructs a new CounterVector.
+func (s *Scope) CounterVector(spec Spec) (*CounterVector, error) {
 	if s == nil {
 		return nil, nil
 	}
@@ -130,8 +130,8 @@ func (s *Scope) NewCounterVector(spec Spec) (*CounterVector, error) {
 	return cv, nil
 }
 
-// NewGaugeVector constructs a new GaugeVector.
-func (s *Scope) NewGaugeVector(spec Spec) (*GaugeVector, error) {
+// GaugeVector constructs a new GaugeVector.
+func (s *Scope) GaugeVector(spec Spec) (*GaugeVector, error) {
 	if s == nil {
 		return nil, nil
 	}
@@ -150,8 +150,8 @@ func (s *Scope) NewGaugeVector(spec Spec) (*GaugeVector, error) {
 	return gv, nil
 }
 
-// NewHistogramVector constructs a new HistogramVector.
-func (s *Scope) NewHistogramVector(spec HistogramSpec) (*HistogramVector, error) {
+// HistogramVector constructs a new HistogramVector.
+func (s *Scope) HistogramVector(spec HistogramSpec) (*HistogramVector, error) {
 	if s == nil {
 		return nil, nil
 	}

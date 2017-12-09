@@ -32,7 +32,7 @@ func TestGauge(t *testing.T) {
 	s := root.Scope().Tagged(Tags{"service": "users"})
 
 	t.Run("duplicate constant tags", func(t *testing.T) {
-		_, err := s.NewGauge(Spec{
+		_, err := s.Gauge(Spec{
 			Name:      "test_gauge",
 			Help:      "help",
 			ConstTags: Tags{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate tag names
@@ -41,7 +41,7 @@ func TestGauge(t *testing.T) {
 	})
 
 	t.Run("valid spec", func(t *testing.T) {
-		gauge, err := s.NewGauge(Spec{
+		gauge, err := s.Gauge(Spec{
 			Name:      "test_gauge",
 			Help:      "Some help.",
 			ConstTags: Tags{"foo": "bar"},
@@ -74,7 +74,7 @@ func TestGaugeVector(t *testing.T) {
 			Help:    "Some help.",
 			VarTags: []string{"var"},
 		}
-		vec, err := root.Scope().NewGaugeVector(spec)
+		vec, err := root.Scope().GaugeVector(spec)
 		require.NoError(t, err, "Unexpected error constructing vector.")
 		return vec, root
 	}
@@ -125,7 +125,7 @@ func TestGaugeVectorConstructionErrors(t *testing.T) {
 	s := New().Scope()
 
 	t.Run("duplicate constant tag names", func(t *testing.T) {
-		_, err := s.NewGaugeVector(Spec{
+		_, err := s.GaugeVector(Spec{
 			Name:      "test_gauge",
 			Help:      "help",
 			ConstTags: Tags{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate tag names
@@ -135,7 +135,7 @@ func TestGaugeVectorConstructionErrors(t *testing.T) {
 	})
 
 	t.Run("duplicate variable tag names", func(t *testing.T) {
-		_, err := s.NewGaugeVector(Spec{
+		_, err := s.GaugeVector(Spec{
 			Name:    "test_gauge",
 			Help:    "help",
 			VarTags: []string{"var", "var"},

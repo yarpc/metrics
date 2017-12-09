@@ -55,27 +55,27 @@ func TestNopHistogramVector(t *testing.T) {
 func TestNopScope(t *testing.T) {
 	var s *Scope
 	s = s.Tagged(Tags{"foo": "bar"})
-	c, err := s.NewCounter(Spec{})
-	assert.NoError(t, err, "Error calling NewCounter on nil Registry.")
+	c, err := s.Counter(Spec{})
+	assert.NoError(t, err, "Error calling Counter on nil scope.")
 	assertNopCounter(t, c)
 
-	cv, err := s.NewCounterVector(Spec{})
-	assert.NoError(t, err, "Error calling NewCounterVector on nil Registry.")
+	cv, err := s.CounterVector(Spec{})
+	assert.NoError(t, err, "Error calling CounterVector on nil scope.")
 	assertNopCounterVector(t, cv)
 
-	g, err := s.NewGauge(Spec{})
-	assert.NoError(t, err, "Error calling NewGauge on nil Registry.")
+	g, err := s.Gauge(Spec{})
+	assert.NoError(t, err, "Error calling Gauge on nil scope.")
 	assertNopGauge(t, g)
 
-	gv, err := s.NewGaugeVector(Spec{})
-	assert.NoError(t, err, "Error calling NewGaugeVector on nil Registry.")
+	gv, err := s.GaugeVector(Spec{})
+	assert.NoError(t, err, "Error calling GaugeVector on nil scope.")
 	assertNopGaugeVector(t, gv)
 
-	h, err := s.NewHistogram(HistogramSpec{})
-	assert.NoError(t, err, "Error calling NewHistogram on nil Registry.")
+	h, err := s.Histogram(HistogramSpec{})
+	assert.NoError(t, err, "Error calling Histogram on nil scope.")
 	assertNopHistogram(t, h)
 
-	hv, err := s.NewHistogramVector(HistogramSpec{})
+	hv, err := s.HistogramVector(HistogramSpec{})
 	assertNopHistogramVector(t, hv)
 }
 
