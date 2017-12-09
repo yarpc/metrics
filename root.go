@@ -53,7 +53,7 @@ func New(opts ...Option) *Root {
 	core := newCore()
 	return &Root{
 		core:  core,
-		scope: newScope(core, Labels{}),
+		scope: newScope(core, Tags{}),
 		handler: promhttp.HandlerFor(core.gatherer, promhttp.HandlerOpts{
 			ErrorHandling: promhttp.HTTPErrorOnError, // 500 on errors
 		}),

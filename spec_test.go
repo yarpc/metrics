@@ -44,11 +44,11 @@ func TestSpecValidation(t *testing.T) {
 			vecOK:    false,
 		},
 		{
-			desc: "valid names & constant labels",
+			desc: "valid names & constant tags",
 			spec: Spec{
-				Name:   "foo",
-				Help:   "Some help.",
-				Labels: Labels{"foo": "bar"},
+				Name:      "foo",
+				Help:      "Some help.",
+				ConstTags: Tags{"foo": "bar"},
 			},
 			scalarOK: true,
 			vecOK:    false,
@@ -79,53 +79,53 @@ func TestSpecValidation(t *testing.T) {
 			vecOK:    false,
 		},
 		{
-			desc: "valid names but invalid label key",
+			desc: "valid names but invalid tag key",
 			spec: Spec{
-				Name:   "foo",
-				Help:   "Some help.",
-				Labels: Labels{"foo:foo": "bar"},
+				Name:      "foo",
+				Help:      "Some help.",
+				ConstTags: Tags{"foo:foo": "bar"},
 			},
 			scalarOK: true,
 			vecOK:    false,
 		},
 		{
-			desc: "valid names but invalid label value",
+			desc: "valid names but invalid tag value",
 			spec: Spec{
-				Name:   "foo",
-				Help:   "Some help.",
-				Labels: Labels{"foo": "bar:bar"},
+				Name:      "foo",
+				Help:      "Some help.",
+				ConstTags: Tags{"foo": "bar:bar"},
 			},
 			scalarOK: true,
 			vecOK:    false,
 		},
 		{
-			desc: "valid names & variable labels",
+			desc: "valid names & variable tags",
 			spec: Spec{
-				Name:           "foo",
-				Help:           "Some help.",
-				VariableLabels: []string{"baz"},
+				Name:    "foo",
+				Help:    "Some help.",
+				VarTags: []string{"baz"},
 			},
 			scalarOK: false,
 			vecOK:    true,
 		},
 		{
-			desc: "valid names, constant labels, & variable labels",
+			desc: "valid names, constant tags, & variable tags",
 			spec: Spec{
-				Name:           "foo",
-				Help:           "Some help.",
-				Labels:         Labels{"foo": "bar"},
-				VariableLabels: []string{"baz"},
+				Name:      "foo",
+				Help:      "Some help.",
+				ConstTags: Tags{"foo": "bar"},
+				VarTags:   []string{"baz"},
 			},
 			scalarOK: false,
 			vecOK:    true,
 		},
 		{
-			desc: "valid names & constant labels, but invalid variable labels",
+			desc: "valid names & constant tags, but invalid variable tags",
 			spec: Spec{
-				Name:           "foo",
-				Help:           "Some help.",
-				Labels:         Labels{"foo": "bar"},
-				VariableLabels: []string{"baz:baz"},
+				Name:      "foo",
+				Help:      "Some help.",
+				ConstTags: Tags{"foo": "bar"},
+				VarTags:   []string{"baz:baz"},
 			},
 			scalarOK: false,
 			vecOK:    true,
@@ -169,12 +169,12 @@ func TestHistogramSpecValidation(t *testing.T) {
 			vecOK:    false,
 		},
 		{
-			desc: "valid names & constant labels",
+			desc: "valid names & constant tags",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:   "foo",
-					Help:   "Some help.",
-					Labels: Labels{"foo": "bar"},
+					Name:      "foo",
+					Help:      "Some help.",
+					ConstTags: Tags{"foo": "bar"},
 				},
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
@@ -220,12 +220,12 @@ func TestHistogramSpecValidation(t *testing.T) {
 			vecOK:    false,
 		},
 		{
-			desc: "valid names but invalid label key",
+			desc: "valid names but invalid tag key",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:   "foo",
-					Help:   "Some help.",
-					Labels: Labels{"foo:foo": "bar"},
+					Name:      "foo",
+					Help:      "Some help.",
+					ConstTags: Tags{"foo:foo": "bar"},
 				},
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
@@ -234,12 +234,12 @@ func TestHistogramSpecValidation(t *testing.T) {
 			vecOK:    false,
 		},
 		{
-			desc: "valid names but invalid label value",
+			desc: "valid names but invalid tag value",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:   "foo",
-					Help:   "Some help.",
-					Labels: Labels{"foo": "bar:bar"},
+					Name:      "foo",
+					Help:      "Some help.",
+					ConstTags: Tags{"foo": "bar:bar"},
 				},
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
@@ -248,12 +248,12 @@ func TestHistogramSpecValidation(t *testing.T) {
 			vecOK:    false,
 		},
 		{
-			desc: "valid names & variable labels",
+			desc: "valid names & variable tags",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:           "foo",
-					Help:           "Some help.",
-					VariableLabels: []string{"baz"},
+					Name:    "foo",
+					Help:    "Some help.",
+					VarTags: []string{"baz"},
 				},
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
@@ -262,13 +262,13 @@ func TestHistogramSpecValidation(t *testing.T) {
 			vecOK:    true,
 		},
 		{
-			desc: "valid names, constant labels, & variable labels",
+			desc: "valid names, constant tags, & variable tags",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:           "foo",
-					Help:           "Some help.",
-					Labels:         Labels{"foo": "bar"},
-					VariableLabels: []string{"baz"},
+					Name:      "foo",
+					Help:      "Some help.",
+					ConstTags: Tags{"foo": "bar"},
+					VarTags:   []string{"baz"},
 				},
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
@@ -277,13 +277,13 @@ func TestHistogramSpecValidation(t *testing.T) {
 			vecOK:    true,
 		},
 		{
-			desc: "valid names & constant labels, but invalid variable labels",
+			desc: "valid names & constant tags, but invalid variable tags",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:           "foo",
-					Help:           "Some help.",
-					Labels:         Labels{"foo": "bar"},
-					VariableLabels: []string{"baz:baz"},
+					Name:      "foo",
+					Help:      "Some help.",
+					ConstTags: Tags{"foo": "bar"},
+					VarTags:   []string{"baz:baz"},
 				},
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
@@ -292,13 +292,13 @@ func TestHistogramSpecValidation(t *testing.T) {
 			vecOK:    true,
 		},
 		{
-			desc: "valid labels, no unit",
+			desc: "valid tags, no unit",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:           "foo",
-					Help:           "Some help.",
-					Labels:         Labels{"foo": "bar"},
-					VariableLabels: []string{"baz"},
+					Name:      "foo",
+					Help:      "Some help.",
+					ConstTags: Tags{"foo": "bar"},
+					VarTags:   []string{"baz"},
 				},
 				Buckets: []int64{1000, 1000 * 60},
 			},
@@ -306,13 +306,13 @@ func TestHistogramSpecValidation(t *testing.T) {
 			vecOK:    false,
 		},
 		{
-			desc: "valid labels, negative unit",
+			desc: "valid tags, negative unit",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:           "foo",
-					Help:           "Some help.",
-					Labels:         Labels{"foo": "bar"},
-					VariableLabels: []string{"baz"},
+					Name:      "foo",
+					Help:      "Some help.",
+					ConstTags: Tags{"foo": "bar"},
+					VarTags:   []string{"baz"},
 				},
 				Unit:    -1 * time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
@@ -321,13 +321,13 @@ func TestHistogramSpecValidation(t *testing.T) {
 			vecOK:    false,
 		},
 		{
-			desc: "valid labels, no buckets",
+			desc: "valid tags, no buckets",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:           "foo",
-					Help:           "Some help.",
-					Labels:         Labels{"foo": "bar"},
-					VariableLabels: []string{"baz"},
+					Name:      "foo",
+					Help:      "Some help.",
+					ConstTags: Tags{"foo": "bar"},
+					VarTags:   []string{"baz"},
 				},
 				Unit: time.Millisecond,
 			},
@@ -335,13 +335,13 @@ func TestHistogramSpecValidation(t *testing.T) {
 			vecOK:    false,
 		},
 		{
-			desc: "valid labels, buckets out of order",
+			desc: "valid tags, buckets out of order",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:           "foo",
-					Help:           "Some help.",
-					Labels:         Labels{"foo": "bar"},
-					VariableLabels: []string{"baz"},
+					Name:      "foo",
+					Help:      "Some help.",
+					ConstTags: Tags{"foo": "bar"},
+					VarTags:   []string{"baz"},
 				},
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000 * 60, 1000},

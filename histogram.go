@@ -74,22 +74,22 @@ func (bs buckets) get(val int64) *bucket {
 // All exported methods are safe to use concurrently, and nil *Histograms are
 // valid no-op implementations.
 type Histogram struct {
-	meta       metadata
-	unit       time.Duration
-	bounds     []int64
-	buckets    buckets
-	sum        atomic.Int64 // required by Prometheus
-	pusher     push.Histogram
-	labelPairs []*promproto.LabelPair
+	meta     metadata
+	unit     time.Duration
+	bounds   []int64
+	buckets  buckets
+	sum      atomic.Int64 // required by Prometheus
+	pusher   push.Histogram
+	tagPairs []*promproto.LabelPair
 }
 
 func newHistogram(m metadata, unit time.Duration, uppers []int64) *Histogram {
 	return &Histogram{
-		buckets:    newBuckets(uppers),
-		meta:       m,
-		unit:       unit,
-		bounds:     uppers,
-		labelPairs: m.MergeLabels(nil /* variable label vals */),
+		buckets:  newBuckets(uppers),
+		meta:     m,
+		unit:     unit,
+		bounds:   uppers,
+		tagPairs: m.MergeTags(nil /* variable tag vals */),
 	}
 }
 
@@ -120,7 +120,7 @@ func (h *Histogram) describe() metadata {
 func (h *Histogram) snapshot() HistogramSnapshot {
 	return HistogramSnapshot{
 		Name:   *h.meta.Name,
-		Labels: zip(h.labelPairs),
+		Tags:   zip(h.tagPairs),
 		Unit:   h.unit,
 		Values: h.observations(),
 	}
@@ -164,7 +164,7 @@ func (h *Histogram) metric() *promproto.Metric {
 
 	sum := float64(h.sum.Load())
 	return &promproto.Metric{
-		Label: h.labelPairs,
+		Label: h.tagPairs,
 		Histogram: &promproto.Histogram{
 			SampleCount: &n,
 			SampleSum:   &sum,
@@ -180,8 +180,8 @@ func (h *Histogram) push(target push.Target) {
 	if h.pusher == nil {
 		h.pusher = target.NewHistogram(push.HistogramSpec{
 			Spec: push.Spec{
-				Name:   *h.meta.Name,
-				Labels: zip(h.labelPairs),
+				Name: *h.meta.Name,
+				Tags: zip(h.tagPairs),
 			},
 			Buckets: h.bounds,
 		})
@@ -192,7 +192,7 @@ func (h *Histogram) push(target push.Target) {
 }
 
 // A HistogramVector is a collection of Histograms that share a name and some
-// constant labels, but also have a consistent set of variable labels. All
+// constant tags, but also have a consistent set of variable tags. All
 // exported methods are safe to use concurrently.
 //
 // A nil *HistogramVector is safe to use, and always returns no-op histograms.
@@ -205,7 +205,7 @@ type HistogramVector struct {
 	bounds []int64
 
 	histogramsMu sync.RWMutex
-	histograms   map[string]*Histogram // key is variable label vals
+	histograms   map[string]*Histogram // key is variable tag vals
 }
 
 func newHistogramVector(m metadata, unit time.Duration, uppers []int64) *HistogramVector {
@@ -217,21 +217,21 @@ func newHistogramVector(m metadata, unit time.Duration, uppers []int64) *Histogr
 	}
 }
 
-// Get retrieves the histogram with the supplied variable label names and
-// values from the vector, creating one if necessary. The variable labels must
-// be supplied in the same order used when creating the vector.
+// Get retrieves the histogram with the supplied variable tag names and values
+// from the vector, creating one if necessary. The variable tags must be
+// supplied in the same order used when creating the vector.
 //
-// Get returns an error if the number or order of labels is incorrect.
-func (hv *HistogramVector) Get(variableLabels ...string) (*Histogram, error) {
+// Get returns an error if the number or order of tags is incorrect.
+func (hv *HistogramVector) Get(variableTagPairs ...string) (*Histogram, error) {
 	if hv == nil {
 		return nil, nil
 	}
-	if err := hv.meta.ValidateVariableLabels(variableLabels); err != nil {
+	if err := hv.meta.ValidateVariableTags(variableTagPairs); err != nil {
 		return nil, err
 	}
 	digester := newDigester()
-	for i := 0; i < len(variableLabels)/2; i++ {
-		digester.add("", scrubLabelValue(variableLabels[i*2+1]))
+	for i := 0; i < len(variableTagPairs)/2; i++ {
+		digester.add("", scrubTagValue(variableTagPairs[i*2+1]))
 	}
 
 	hv.histogramsMu.RLock()
@@ -243,7 +243,7 @@ func (hv *HistogramVector) Get(variableLabels ...string) (*Histogram, error) {
 	}
 
 	hv.histogramsMu.Lock()
-	h, err := hv.newHistogram(digester.digest(), variableLabels)
+	h, err := hv.newHistogram(digester.digest(), variableTagPairs)
 	hv.histogramsMu.Unlock()
 	digester.free()
 
@@ -252,28 +252,28 @@ func (hv *HistogramVector) Get(variableLabels ...string) (*Histogram, error) {
 
 // MustGet behaves exactly like Get, but panics on errors. If code using this
 // method is covered by unit tests, this is safe.
-func (hv *HistogramVector) MustGet(variableLabels ...string) *Histogram {
+func (hv *HistogramVector) MustGet(variableTagPairs ...string) *Histogram {
 	if hv == nil {
 		return nil
 	}
-	h, err := hv.Get(variableLabels...)
+	h, err := hv.Get(variableTagPairs...)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get histogram: %v", err))
 	}
 	return h
 }
 
-func (hv *HistogramVector) newHistogram(key []byte, variableLabels []string) (*Histogram, error) {
+func (hv *HistogramVector) newHistogram(key []byte, variableTagPairs []string) (*Histogram, error) {
 	h, ok := hv.histograms[string(key)]
 	if ok {
 		return h, nil
 	}
 	h = &Histogram{
-		buckets:    newBuckets(hv.bounds),
-		meta:       hv.meta,
-		unit:       hv.unit,
-		bounds:     hv.bounds,
-		labelPairs: hv.meta.MergeLabels(variableLabels),
+		buckets:  newBuckets(hv.bounds),
+		meta:     hv.meta,
+		unit:     hv.unit,
+		bounds:   hv.bounds,
+		tagPairs: hv.meta.MergeTags(variableTagPairs),
 	}
 	hv.histograms[string(key)] = h
 	return h, nil

@@ -31,14 +31,14 @@ import (
 
 func TestHistogram(t *testing.T) {
 	root := New()
-	s := root.Scope().Labeled(Labels{"service": "users"})
+	s := root.Scope().Tagged(Tags{"service": "users"})
 
-	t.Run("duplicate constant label names", func(t *testing.T) {
+	t.Run("duplicate constant tag names", func(t *testing.T) {
 		_, err := s.NewHistogram(HistogramSpec{
 			Spec: Spec{
-				Name:   "test_latency_ns",
-				Help:   "Some help.",
-				Labels: Labels{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate names
+				Name:      "test_latency_ns",
+				Help:      "Some help.",
+				ConstTags: Tags{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate names
 			},
 			Unit:    time.Nanosecond,
 			Buckets: []int64{10, 50, 100},
@@ -49,9 +49,9 @@ func TestHistogram(t *testing.T) {
 	t.Run("valid spec", func(t *testing.T) {
 		h, err := s.NewHistogram(HistogramSpec{
 			Spec: Spec{
-				Name:   "test_latency_ns",
-				Help:   "Some help.",
-				Labels: Labels{"foo": "bar"},
+				Name:      "test_latency_ns",
+				Help:      "Some help.",
+				ConstTags: Tags{"foo": "bar"},
 			},
 			Unit:    time.Nanosecond,
 			Buckets: []int64{10, 50, 100},
@@ -70,7 +70,7 @@ func TestHistogram(t *testing.T) {
 		assert.Equal(t, HistogramSnapshot{
 			Unit:   time.Nanosecond,
 			Name:   "test_latency_ns",
-			Labels: Labels{"foo": "bar", "service": "users"},
+			Tags:   Tags{"foo": "bar", "service": "users"},
 			Values: []int64{10, 10, 10, 100, math.MaxInt64},
 		}, got, "Unexpected histogram snapshot.")
 	})
@@ -84,12 +84,12 @@ func TestHistogramVector(t *testing.T) {
 		want HistogramSnapshot
 	}{
 		{
-			desc: "valid labels",
+			desc: "valid tags",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:           "test_latency_ms",
-					Help:           "Some help.",
-					VariableLabels: []string{"var"},
+					Name:    "test_latency_ms",
+					Help:    "Some help.",
+					VarTags: []string{"var"},
 				},
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
@@ -98,24 +98,24 @@ func TestHistogramVector(t *testing.T) {
 				vec, err := s.NewHistogramVector(spec)
 				require.NoError(t, err, "Unexpected error constructing vector.")
 				h, err := vec.Get("var", "x")
-				require.NoError(t, err, "Unexpected error getting a counter with correct number of labels.")
+				require.NoError(t, err, "Unexpected error getting a counter with correct number of tags.")
 				h.Observe(time.Millisecond)
 				vec.MustGet("var", "x").Observe(time.Millisecond)
 			},
 			want: HistogramSnapshot{
 				Name:   "test_latency_ms",
-				Labels: Labels{"var": "x"},
+				Tags:   Tags{"var": "x"},
 				Unit:   time.Millisecond,
 				Values: []int64{1000, 1000},
 			},
 		},
 		{
-			desc: "invalid labels",
+			desc: "invalid tags",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:           "test_latency_ms",
-					Help:           "Some help.",
-					VariableLabels: []string{"var"},
+					Name:    "test_latency_ms",
+					Help:    "Some help.",
+					VarTags: []string{"var"},
 				},
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
@@ -124,24 +124,24 @@ func TestHistogramVector(t *testing.T) {
 				vec, err := s.NewHistogramVector(spec)
 				require.NoError(t, err, "Unexpected error constructing vector.")
 				h, err := vec.Get("var", "x!")
-				require.NoError(t, err, "Unexpected error getting a counter with correct number of labels.")
+				require.NoError(t, err, "Unexpected error getting a counter with correct number of tags.")
 				h.Observe(time.Millisecond)
 				vec.MustGet("var", "x!").Observe(time.Millisecond)
 			},
 			want: HistogramSnapshot{
 				Name:   "test_latency_ms",
-				Labels: Labels{"var": "x_"},
+				Tags:   Tags{"var": "x_"},
 				Unit:   time.Millisecond,
 				Values: []int64{1000, 1000},
 			},
 		},
 		{
-			desc: "wrong number of label values",
+			desc: "wrong number of tag values",
 			spec: HistogramSpec{
 				Spec: Spec{
-					Name:           "test_latency_ms",
-					Help:           "Some help.",
-					VariableLabels: []string{"var"},
+					Name:    "test_latency_ms",
+					Help:    "Some help.",
+					VarTags: []string{"var"},
 				},
 				Unit:    time.Millisecond,
 				Buckets: []int64{1000, 1000 * 60},
@@ -150,11 +150,11 @@ func TestHistogramVector(t *testing.T) {
 				vec, err := s.NewHistogramVector(spec)
 				require.NoError(t, err, "Unexpected error constructing vector.")
 				_, err = vec.Get("var", "x", "var2", "y")
-				require.Error(t, err, "Unexpected success calling Get with incorrect number of labels.")
+				require.Error(t, err, "Unexpected success calling Get with incorrect number of tags.")
 				require.Panics(
 					t,
 					func() { vec.MustGet("var", "x", "var2", "y") },
-					"Expected a panic using MustGet with the wrong number of labels.",
+					"Expected a panic using MustGet with the wrong number of tags.",
 				)
 			},
 		},
@@ -181,9 +181,9 @@ func TestHistogramVectorIndependence(t *testing.T) {
 	root := New()
 	spec := HistogramSpec{
 		Spec: Spec{
-			Name:           "test_latency_ms",
-			Help:           "Some help.",
-			VariableLabels: []string{"var"},
+			Name:    "test_latency_ms",
+			Help:    "Some help.",
+			VarTags: []string{"var"},
 		},
 		Unit:    time.Millisecond,
 		Buckets: []int64{1000},
@@ -205,13 +205,13 @@ func TestHistogramVectorIndependence(t *testing.T) {
 
 	assert.Equal(t, HistogramSnapshot{
 		Name:   "test_latency_ms",
-		Labels: Labels{"var": "x"},
+		Tags:   Tags{"var": "x"},
 		Unit:   time.Millisecond,
 		Values: []int64{1000},
 	}, snap.Histograms[0], "Unexpected first histogram snapshot.")
 	assert.Equal(t, HistogramSnapshot{
 		Name:   "test_latency_ms",
-		Labels: Labels{"var": "y"},
+		Tags:   Tags{"var": "y"},
 		Unit:   time.Millisecond,
 		Values: []int64{1000},
 	}, snap.Histograms[1], "Unexpected second histogram snapshot.")

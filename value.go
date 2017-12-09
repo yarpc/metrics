@@ -33,29 +33,29 @@ import (
 type value struct {
 	atomic.Int64
 
-	meta       metadata
-	labelPairs []*promproto.LabelPair
+	meta     metadata
+	tagPairs []*promproto.LabelPair
 }
 
 func newValue(m metadata) value {
 	return value{
-		meta:       m,
-		labelPairs: m.MergeLabels(nil /* variable labels */),
+		meta:     m,
+		tagPairs: m.MergeTags(nil /* variable tags */),
 	}
 }
 
-func newDynamicValue(m metadata, variableLabels []string) value {
+func newDynamicValue(m metadata, variableTagPairs []string) value {
 	return value{
-		meta:       m,
-		labelPairs: m.MergeLabels(variableLabels),
+		meta:     m,
+		tagPairs: m.MergeTags(variableTagPairs),
 	}
 }
 
 func (v value) snapshot() Snapshot {
 	return Snapshot{
-		Name:   *v.meta.Name,
-		Labels: zip(v.labelPairs),
-		Value:  v.Load(),
+		Name:  *v.meta.Name,
+		Tags:  zip(v.tagPairs),
+		Value: v.Load(),
 	}
 }
 
@@ -64,20 +64,20 @@ type vector struct {
 	meta metadata
 
 	// The factory function creates a new metric given the vector's metadata
-	// and the variable label keys and values.
+	// and the variable tag keys and values.
 	factory func(metadata, []string) metric
 
 	metricsMu sync.RWMutex
-	metrics   map[string]metric // key is variable label vals
+	metrics   map[string]metric // key is variable tag vals
 }
 
-func (vec *vector) getOrCreate(labels []string) (metric, error) {
-	if err := vec.meta.ValidateVariableLabels(labels); err != nil {
+func (vec *vector) getOrCreate(variableTagPairs []string) (metric, error) {
+	if err := vec.meta.ValidateVariableTags(variableTagPairs); err != nil {
 		return nil, err
 	}
 	digester := newDigester()
-	for i := 0; i < len(labels)/2; i++ {
-		digester.add("", scrubLabelValue(labels[i*2+1]))
+	for i := 0; i < len(variableTagPairs)/2; i++ {
+		digester.add("", scrubTagValue(variableTagPairs[i*2+1]))
 	}
 
 	vec.metricsMu.RLock()
@@ -89,19 +89,19 @@ func (vec *vector) getOrCreate(labels []string) (metric, error) {
 	}
 
 	vec.metricsMu.Lock()
-	m, err := vec.newValue(digester.digest(), labels)
+	m, err := vec.newValue(digester.digest(), variableTagPairs)
 	vec.metricsMu.Unlock()
 	digester.free()
 
 	return m, err
 }
 
-func (vec *vector) newValue(key []byte, variableLabels []string) (metric, error) {
+func (vec *vector) newValue(key []byte, variableTagPairs []string) (metric, error) {
 	m, ok := vec.metrics[string(key)]
 	if ok {
 		return m, nil
 	}
-	m = vec.factory(vec.meta, variableLabels)
+	m = vec.factory(vec.meta, variableTagPairs)
 	vec.metrics[string(key)] = m
 	return m, nil
 }

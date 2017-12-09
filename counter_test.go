@@ -29,22 +29,22 @@ import (
 
 func TestCounter(t *testing.T) {
 	root := New()
-	s := root.Scope().Labeled(Labels{"service": "users"})
+	s := root.Scope().Tagged(Tags{"service": "users"})
 
-	t.Run("duplicate constant label names", func(t *testing.T) {
+	t.Run("duplicate constant tag names", func(t *testing.T) {
 		_, err := s.NewCounter(Spec{
-			Name:   "test_counter",
-			Help:   "help",
-			Labels: Labels{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate label names
+			Name:      "test_counter",
+			Help:      "help",
+			ConstTags: Tags{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate tag names
 		})
 		assert.Error(t, err, "Expected an error constructing a counter with invalid spec.")
 	})
 
 	t.Run("valid spec", func(t *testing.T) {
 		counter, err := s.NewCounter(Spec{
-			Name:   "test_counter",
-			Help:   "Some help.",
-			Labels: Labels{"foo": "bar"},
+			Name:      "test_counter",
+			Help:      "Some help.",
+			ConstTags: Tags{"foo": "bar"},
 		})
 		require.NoError(t, err, "Unexpected error constructing counter.")
 
@@ -56,9 +56,9 @@ func TestCounter(t *testing.T) {
 		snap := root.Snapshot()
 		require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
 		assert.Equal(t, Snapshot{
-			Name:   "test_counter",
-			Labels: Labels{"foo": "bar", "service": "users"},
-			Value:  3,
+			Name:  "test_counter",
+			Tags:  Tags{"foo": "bar", "service": "users"},
+			Value: 3,
 		}, snap.Counters[0], "Unexpected counter snapshot.")
 	})
 }
@@ -67,27 +67,27 @@ func TestCounterVector(t *testing.T) {
 	newVector := func() (*CounterVector, *Root) {
 		root := New()
 		spec := Spec{
-			Name:           "test_counter",
-			Help:           "Some help.",
-			VariableLabels: []string{"var"},
+			Name:    "test_counter",
+			Help:    "Some help.",
+			VarTags: []string{"var"},
 		}
 		vec, err := root.Scope().NewCounterVector(spec)
 		require.NoError(t, err, "Unexpected error constructing vector.")
 		return vec, root
 	}
 
-	assertCounter := func(r *Root, expectedLabel string, expectedCount int64) {
+	assertCounter := func(r *Root, expectedTag string, expectedCount int64) {
 		snap := r.Snapshot()
 		require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
 		got := snap.Counters[0]
 		assert.Equal(t, Snapshot{
-			Name:   "test_counter",
-			Labels: Labels{"var": expectedLabel},
-			Value:  expectedCount,
+			Name:  "test_counter",
+			Tags:  Tags{"var": expectedTag},
+			Value: expectedCount,
 		}, got, "Unexpected counter snapshot.")
 	}
 
-	t.Run("valid labels", func(t *testing.T) {
+	t.Run("valid tags", func(t *testing.T) {
 		vec, root := newVector()
 		counter, err := vec.Get("var", "x")
 		require.NoError(t, err, "Unexpected error getting counter.")
@@ -98,7 +98,7 @@ func TestCounterVector(t *testing.T) {
 		assertCounter(root, "x", 3)
 	})
 
-	t.Run("invalid labels", func(t *testing.T) {
+	t.Run("invalid tags", func(t *testing.T) {
 		vec, root := newVector()
 		counter, err := vec.Get("var", "x!")
 		require.NoError(t, err, "Unexpected error getting counter.")
@@ -113,31 +113,31 @@ func TestCounterVector(t *testing.T) {
 	t.Run("cardinality mismatch", func(t *testing.T) {
 		vec, _ := newVector()
 		_, err := vec.Get("var", "x", "var2", "y")
-		assert.Error(t, err, "Expected an error getting a counter with too many labels.")
+		assert.Error(t, err, "Expected an error getting a counter with too many tags.")
 		assert.Panics(t, func() {
 			vec.MustGet("var", "x", "var2", "y")
-		}, "Expected a panic using MustGet with the wrong number of labels.")
+		}, "Expected a panic using MustGet with the wrong number of tags.")
 	})
 }
 
 func TestCounterVectorConstructionErrors(t *testing.T) {
 	s := New().Scope()
 
-	t.Run("duplicate constant label names", func(t *testing.T) {
+	t.Run("duplicate constant tag names", func(t *testing.T) {
 		_, err := s.NewCounterVector(Spec{
-			Name:           "test_counter",
-			Help:           "help",
-			Labels:         Labels{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate label names
-			VariableLabels: []string{"var"},
+			Name:      "test_counter",
+			Help:      "help",
+			ConstTags: Tags{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate tag names
+			VarTags:   []string{"var"},
 		})
 		assert.Error(t, err, "Expected an error constructing a counter vector with invalid spec.")
 	})
 
-	t.Run("duplicate variable label names", func(t *testing.T) {
+	t.Run("duplicate variable tag names", func(t *testing.T) {
 		_, err := s.NewCounterVector(Spec{
-			Name:           "test_counter",
-			Help:           "help",
-			VariableLabels: []string{"var", "var"},
+			Name:    "test_counter",
+			Help:    "help",
+			VarTags: []string{"var", "var"},
 		})
 		assert.Error(t, err, "Expected an error constructing a counter vector with invalid spec.")
 	})

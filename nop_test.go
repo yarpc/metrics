@@ -54,7 +54,7 @@ func TestNopHistogramVector(t *testing.T) {
 
 func TestNopScope(t *testing.T) {
 	var s *Scope
-	s = s.Labeled(Labels{"foo": "bar"})
+	s = s.Tagged(Tags{"foo": "bar"})
 	c, err := s.NewCounter(Spec{})
 	assert.NoError(t, err, "Error calling NewCounter on nil Registry.")
 	assertNopCounter(t, c)

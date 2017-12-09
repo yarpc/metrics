@@ -22,32 +22,32 @@ package metrics
 
 // A Scope is a collection of tagged metrics.
 type Scope struct {
-	core        *core
-	constLabels Labels
+	core      *core
+	constTags Tags
 }
 
-func newScope(c *core, labels Labels) *Scope {
+func newScope(c *core, tags Tags) *Scope {
 	return &Scope{
-		core:        c,
-		constLabels: labels,
+		core:      c,
+		constTags: tags,
 	}
 }
 
-// Labeled creates a new Registry with new constant labels appended to the
-// current Registry's existing labels. Label names and values are
-// automatically scrubbed, with invalid characters replaced by underscores.
-func (s *Scope) Labeled(ls Labels) *Scope {
+// Tagged creates a new Registry with new constant tags appended to the
+// current Registry's existing tags. Tag names and values are automatically
+// scrubbed, with invalid characters replaced by underscores.
+func (s *Scope) Tagged(tags Tags) *Scope {
 	if s == nil {
 		return nil
 	}
-	newLabels := make(Labels, len(s.constLabels)+len(ls))
-	for k, v := range s.constLabels {
-		newLabels[k] = v
+	newTags := make(Tags, len(s.constTags)+len(tags))
+	for k, v := range s.constTags {
+		newTags[k] = v
 	}
-	for k, v := range ls {
-		newLabels[scrubName(k)] = scrubLabelValue(v)
+	for k, v := range tags {
+		newTags[scrubName(k)] = scrubTagValue(v)
 	}
-	return newScope(s.core, newLabels)
+	return newScope(s.core, newTags)
 }
 
 // NewCounter constructs a new Counter.
@@ -55,7 +55,7 @@ func (s *Scope) NewCounter(spec Spec) (*Counter, error) {
 	if s == nil {
 		return nil, nil
 	}
-	spec = s.addConstLabels(spec)
+	spec = s.addConstTags(spec)
 	if err := spec.validateScalar(); err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (s *Scope) NewGauge(spec Spec) (*Gauge, error) {
 	if s == nil {
 		return nil, nil
 	}
-	spec = s.addConstLabels(spec)
+	spec = s.addConstTags(spec)
 	if err := spec.validateScalar(); err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (s *Scope) NewHistogram(spec HistogramSpec) (*Histogram, error) {
 	if s == nil {
 		return nil, nil
 	}
-	spec.Spec = s.addConstLabels(spec.Spec)
+	spec.Spec = s.addConstTags(spec.Spec)
 	if err := spec.validateScalar(); err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (s *Scope) NewCounterVector(spec Spec) (*CounterVector, error) {
 	if s == nil {
 		return nil, nil
 	}
-	spec = s.addConstLabels(spec)
+	spec = s.addConstTags(spec)
 	if err := spec.validateVector(); err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (s *Scope) NewGaugeVector(spec Spec) (*GaugeVector, error) {
 	if s == nil {
 		return nil, nil
 	}
-	spec = s.addConstLabels(spec)
+	spec = s.addConstTags(spec)
 	if err := spec.validateVector(); err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (s *Scope) NewHistogramVector(spec HistogramSpec) (*HistogramVector, error)
 	if s == nil {
 		return nil, nil
 	}
-	spec.Spec = s.addConstLabels(spec.Spec)
+	spec.Spec = s.addConstTags(spec.Spec)
 	if err := spec.validateVector(); err != nil {
 		return nil, err
 	}
@@ -170,17 +170,17 @@ func (s *Scope) NewHistogramVector(spec HistogramSpec) (*HistogramVector, error)
 	return hv, nil
 }
 
-func (s *Scope) addConstLabels(spec Spec) Spec {
-	if len(s.constLabels) == 0 {
+func (s *Scope) addConstTags(spec Spec) Spec {
+	if len(s.constTags) == 0 {
 		return spec
 	}
-	labels := make(Labels, len(s.constLabels)+len(spec.Labels))
-	for k, v := range s.constLabels {
-		labels[k] = v
+	tags := make(Tags, len(s.constTags)+len(spec.ConstTags))
+	for k, v := range s.constTags {
+		tags[k] = v
 	}
-	for k, v := range spec.Labels {
-		labels[k] = v
+	for k, v := range spec.ConstTags {
+		tags[k] = v
 	}
-	spec.Labels = labels
+	spec.ConstTags = tags
 	return spec
 }

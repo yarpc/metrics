@@ -82,7 +82,7 @@ func TestIsValidName(t *testing.T) {
 	), "Hand-rolled validation doesn't match Tally regexp && stock Prometheus validators.")
 }
 
-func TestIsValidLabelValue(t *testing.T) {
+func TestIsValidTagValue(t *testing.T) {
 	tallyRe := regexp.MustCompile(`^[0-9A-z_.\-]+$`)
 	isValid := func(s string) bool {
 		prom := model.LabelValue(s).IsValid()
@@ -97,20 +97,20 @@ func TestIsValidLabelValue(t *testing.T) {
 	), "Hand-rolled validation doesn't match Tally regexp && stock Prometheus validators.")
 }
 
-func TestScrubLabelValue(t *testing.T) {
+func TestScrubTagValue(t *testing.T) {
 	tests := []struct {
 		in  string
 		out string
 	}{
 		{"foo", "foo"},
-		{"", DefaultLabelValue},
+		{"", DefaultTagValue},
 		{"foo!", "foo_"},
 		{"!foo", "_foo"},
 		{"fOo1.!FoO", "fOo1._FoO"},
 	}
 
 	for _, tt := range tests {
-		assert.Equal(t, tt.out, scrubLabelValue(tt.in), "Unexpected result from scrubLabelValue.")
+		assert.Equal(t, tt.out, scrubTagValue(tt.in), "Unexpected result from scrubTagValue.")
 	}
 }
 
@@ -119,7 +119,7 @@ func TestScrubName(t *testing.T) {
 		in  string
 		out string
 	}{
-		{"", DefaultLabelValue},
+		{"", DefaultTagValue},
 		{"foo", "foo"},
 		{"foo!", "foo_"},
 		{"!foo", "_foo"},
@@ -145,13 +145,13 @@ func TestScrubQuick(t *testing.T) {
 			return IsValidName(scrubbed)
 		}, nil)
 	})
-	t.Run("scrubLabelValue", func(t *testing.T) {
+	t.Run("scrubTagValue", func(t *testing.T) {
 		quick.Check(func(s string) bool {
-			scrubbed := scrubLabelValue(s)
-			if IsValidLabelValue(s) {
+			scrubbed := scrubTagValue(s)
+			if IsValidTagValue(s) {
 				return s == scrubbed
 			}
-			return IsValidLabelValue(scrubbed)
+			return IsValidTagValue(scrubbed)
 		}, nil)
 	})
 }
