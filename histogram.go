@@ -94,7 +94,8 @@ func newHistogram(m metadata, unit time.Duration, uppers []int64) *Histogram {
 }
 
 // Observe finds the correct bucket for the supplied duration and increments
-// its counter.
+// its counter. This is purely a convenience - it's equivalent to dividing the
+// duration by the histogram's unit and calling ObserveInt directly.
 func (h *Histogram) Observe(d time.Duration) {
 	if h == nil {
 		return
@@ -193,9 +194,8 @@ func (h *Histogram) push(target push.Target) {
 
 // A HistogramVector is a collection of Histograms that share a name and some
 // constant tags, but also have a consistent set of variable tags. All
-// exported methods are safe to use concurrently.
-//
-// A nil *HistogramVector is safe to use, and always returns no-op histograms.
+// exported methods are safe to use concurrently. Nil *HistogramVectors are
+// safe to use and always return no-op histograms.
 //
 // For a general description of vector types, see the package-level
 // documentation.

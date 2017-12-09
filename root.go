@@ -32,7 +32,7 @@ import (
 	"go.uber.org/atomic"
 )
 
-// An Option configures a Root. Currently, there are no exported Options.
+// An Option configures a root. Currently, there are no exported options.
 type Option interface {
 	unimplemented()
 }
@@ -40,6 +40,14 @@ type Option interface {
 // A Root is a collection of tagged metrics that can be exposed via in-memory
 // snapshots, push-based telemetry systems, or a Prometheus-compatible HTTP
 // handler.
+//
+// Within a root, metrics must obey two uniqueness constraints. First, any two
+// metrics with the same name must have the same tag names (both constant and
+// variable). Second, no two metrics can share the same name, constant tag
+// names, and constant tag values. Functionally, users of this package can
+// avoid collisions by using descriptive metric names that begin with a
+// component or subsystem name. For example, prefer
+// "grpc_successes_by_procedure" over "successes".
 type Root struct {
 	*core
 
@@ -48,7 +56,7 @@ type Root struct {
 	handler http.Handler
 }
 
-// New constructs a Root.
+// New constructs a root.
 func New(opts ...Option) *Root {
 	core := newCore()
 	return &Root{
@@ -60,7 +68,7 @@ func New(opts ...Option) *Root {
 	}
 }
 
-// Scope exposes the Root's top-level metrics collection. Tagged sub-scopes
+// Scope exposes the root's top-level metrics collection. Tagged sub-scopes
 // and individual counters, gauges, histograms, and vectors can be created
 // from this top-level Scope.
 func (r *Root) Scope() *Scope {
@@ -80,9 +88,8 @@ func (r *Root) Snapshot() *RootSnapshot {
 }
 
 // Push starts a goroutine that periodically exports all registered metrics to
-// the supplied target. Controllers may only push to a single target at a
-// time; to push to multiple backends simultaneously, implement a teeing
-// push.Target.
+// the supplied target. Roots may only push to a single target at a time; to
+// push to multiple backends simultaneously, implement a teeing push.Target.
 //
 // The returned function cleanly shuts down the background goroutine.
 func (r *Root) Push(target push.Target, tick time.Duration) (context.CancelFunc, error) {

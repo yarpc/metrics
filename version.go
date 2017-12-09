@@ -20,5 +20,6 @@
 
 package metrics
 
-// Version is exported for runtime compatibility checks.
+// Version is the current semantic version, exported for runtime compatibility
+// checks.
 const Version = "0.1.0"

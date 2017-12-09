@@ -29,9 +29,8 @@ import (
 )
 
 // A Counter is a monotonically increasing value, like a car's odometer. All
-// its exported methods are safe to use concurrently.
-//
-// Nil *Counters are safe no-op implementations.
+// its exported methods are safe to use concurrently, and nil *Counters are
+// safe no-op implementations.
 type Counter struct {
 	val    value
 	pusher push.Counter
@@ -114,9 +113,8 @@ func (c *Counter) push(target push.Target) {
 
 // A CounterVector is a collection of Counters that share a name and some
 // constant tags, but also have a consistent set of variable tags. All
-// exported methods are safe to use concurrently.
-//
-// A nil *CounterVector is safe to use, and always returns no-op counters.
+// exported methods are safe to use concurrently. Nil *CounterVectors are safe
+// to use and always return no-op counters.
 //
 // For a general description of vector types, see the package-level
 // documentation.

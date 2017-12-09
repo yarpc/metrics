@@ -32,13 +32,8 @@ import (
 const _defaultCollectionSize = 128
 
 // A core is a collection of metrics. Uniqueness is enforced with two checks,
-// just like the vanilla Prometheus client:
-//
-// First, any two metrics with the same name must have the same tag names
-// (both constant and variable).
-//
-// Second, no two metrics can share the same name and the same constant tag
-// names and values.
+// explained in the documentation of the Root struct. The checks are slightly
+// stricter than those used by the official Prometheus client.
 //
 // The test suite for metric uniqueness is well-commented and explores the
 // consequences of these two rules.
