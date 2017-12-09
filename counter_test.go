@@ -28,11 +28,11 @@ import (
 )
 
 func TestCounter(t *testing.T) {
-	r, c := New()
-	r = r.Labeled(Labels{"service": "users"})
+	root := New()
+	s := root.Scope().Labeled(Labels{"service": "users"})
 
 	t.Run("duplicate constant label names", func(t *testing.T) {
-		_, err := r.NewCounter(Spec{
+		_, err := s.NewCounter(Spec{
 			Name:   "test_counter",
 			Help:   "help",
 			Labels: Labels{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate label names
@@ -41,7 +41,7 @@ func TestCounter(t *testing.T) {
 	})
 
 	t.Run("valid spec", func(t *testing.T) {
-		counter, err := r.NewCounter(Spec{
+		counter, err := s.NewCounter(Spec{
 			Name:   "test_counter",
 			Help:   "Some help.",
 			Labels: Labels{"foo": "bar"},
@@ -53,7 +53,7 @@ func TestCounter(t *testing.T) {
 		assert.Equal(t, int64(3), counter.Add(-1), "Should forbid decrementing counters.")
 		assert.Equal(t, int64(3), counter.Load(), "Unexpected in-memory counter value.")
 
-		snap := c.Snapshot()
+		snap := root.Snapshot()
 		require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
 		assert.Equal(t, Snapshot{
 			Name:   "test_counter",
@@ -64,20 +64,20 @@ func TestCounter(t *testing.T) {
 }
 
 func TestCounterVector(t *testing.T) {
-	newVector := func() (*CounterVector, *Controller) {
-		r, c := New()
+	newVector := func() (*CounterVector, *Root) {
+		root := New()
 		spec := Spec{
 			Name:           "test_counter",
 			Help:           "Some help.",
 			VariableLabels: []string{"var"},
 		}
-		vec, err := r.NewCounterVector(spec)
+		vec, err := root.Scope().NewCounterVector(spec)
 		require.NoError(t, err, "Unexpected error constructing vector.")
-		return vec, c
+		return vec, root
 	}
 
-	assertCounter := func(c *Controller, expectedLabel string, expectedCount int64) {
-		snap := c.Snapshot()
+	assertCounter := func(r *Root, expectedLabel string, expectedCount int64) {
+		snap := r.Snapshot()
 		require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
 		got := snap.Counters[0]
 		assert.Equal(t, Snapshot{
@@ -88,18 +88,18 @@ func TestCounterVector(t *testing.T) {
 	}
 
 	t.Run("valid labels", func(t *testing.T) {
-		vec, c := newVector()
+		vec, root := newVector()
 		counter, err := vec.Get("var", "x")
 		require.NoError(t, err, "Unexpected error getting counter.")
 
 		counter.Inc()
 		vec.MustGet("var", "x").Add(2)
 
-		assertCounter(c, "x", 3)
+		assertCounter(root, "x", 3)
 	})
 
 	t.Run("invalid labels", func(t *testing.T) {
-		vec, c := newVector()
+		vec, root := newVector()
 		counter, err := vec.Get("var", "x!")
 		require.NoError(t, err, "Unexpected error getting counter.")
 
@@ -107,7 +107,7 @@ func TestCounterVector(t *testing.T) {
 		vec.MustGet("var", "x!").Inc()
 		vec.MustGet("var", "x&").Inc()
 
-		assertCounter(c, "x_", 3)
+		assertCounter(root, "x_", 3)
 	})
 
 	t.Run("cardinality mismatch", func(t *testing.T) {
@@ -121,10 +121,10 @@ func TestCounterVector(t *testing.T) {
 }
 
 func TestCounterVectorConstructionErrors(t *testing.T) {
-	r, _ := New()
+	s := New().Scope()
 
 	t.Run("duplicate constant label names", func(t *testing.T) {
-		_, err := r.NewCounterVector(Spec{
+		_, err := s.NewCounterVector(Spec{
 			Name:           "test_counter",
 			Help:           "help",
 			Labels:         Labels{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate label names
@@ -134,7 +134,7 @@ func TestCounterVectorConstructionErrors(t *testing.T) {
 	})
 
 	t.Run("duplicate variable label names", func(t *testing.T) {
-		_, err := r.NewCounterVector(Spec{
+		_, err := s.NewCounterVector(Spec{
 			Name:           "test_counter",
 			Help:           "help",
 			VariableLabels: []string{"var", "var"},

@@ -55,15 +55,15 @@ func (l HistogramSnapshot) less(other HistogramSnapshot) bool {
 	return l.Labels.less(other.Labels)
 }
 
-// A RegistrySnapshot exposes all the metrics contained in a Registry. It's
-// useful in tests, but shouldn't be used in production code.
-type RegistrySnapshot struct {
+// A RootSnapshot exposes all the metrics contained in a Root and all its
+// Scopes. It's useful in tests, but shouldn't be used in production code.
+type RootSnapshot struct {
 	Counters   []Snapshot
 	Gauges     []Snapshot
 	Histograms []HistogramSnapshot
 }
 
-func (s *RegistrySnapshot) sort() {
+func (s *RootSnapshot) sort() {
 	sort.Slice(s.Counters, func(i, j int) bool {
 		return s.Counters[i].less(s.Counters[j])
 	})
@@ -75,7 +75,7 @@ func (s *RegistrySnapshot) sort() {
 	})
 }
 
-func (s *RegistrySnapshot) add(m metric) {
+func (s *RootSnapshot) add(m metric) {
 	switch v := m.(type) {
 	case *Counter:
 		s.Counters = append(s.Counters, v.snapshot())

@@ -367,58 +367,54 @@ func TestHistogramSpecValidation(t *testing.T) {
 	}
 }
 
-func justRegistry(r *Registry, _ *Controller) *Registry {
-	return r
-}
-
 func assertScalarSpecOK(t testing.TB, spec Spec) {
-	_, err := justRegistry(New()).NewCounter(spec)
+	_, err := New().Scope().NewCounter(spec)
 	assert.NoError(t, err, "Expected success from NewCounter.")
 
-	_, err = justRegistry(New()).NewGauge(spec)
+	_, err = New().Scope().NewGauge(spec)
 	assert.NoError(t, err, "Expected success from NewGauge.")
 }
 
 func assertScalarSpecFail(t testing.TB, spec Spec) {
-	_, err := justRegistry(New()).NewCounter(spec)
+	_, err := New().Scope().NewCounter(spec)
 	assert.Error(t, err, "Expected an error from NewCounter.")
 
-	_, err = justRegistry(New()).NewGauge(spec)
+	_, err = New().Scope().NewGauge(spec)
 	assert.Error(t, err, "Expected an error from NewGauge.")
 }
 
 func assertVectorSpecOK(t testing.TB, spec Spec) {
-	_, err := justRegistry(New()).NewCounterVector(spec)
+	_, err := New().Scope().NewCounterVector(spec)
 	assert.NoError(t, err, "Expected success from NewCounterVector.")
 
-	_, err = justRegistry(New()).NewGaugeVector(spec)
+	_, err = New().Scope().NewGaugeVector(spec)
 	assert.NoError(t, err, "Expected success from NewGaugeVector.")
 }
 
 func assertVectorSpecFail(t testing.TB, spec Spec) {
-	_, err := justRegistry(New()).NewCounterVector(spec)
+	_, err := New().Scope().NewCounterVector(spec)
 	assert.Error(t, err, "Expected an error from NewCounterVector.")
 
-	_, err = justRegistry(New()).NewGaugeVector(spec)
+	_, err = New().Scope().NewGaugeVector(spec)
 	assert.Error(t, err, "Expected an error from NewGaugeVector.")
 }
 
 func assertScalarHistogramSpecOK(t testing.TB, spec HistogramSpec) {
-	_, err := justRegistry(New()).NewHistogram(spec)
+	_, err := New().Scope().NewHistogram(spec)
 	assert.NoError(t, err, "Expected success from NewLatencies.")
 }
 
 func assertSimpleHistogramSpecFail(t testing.TB, spec HistogramSpec) {
-	_, err := justRegistry(New()).NewHistogram(spec)
+	_, err := New().Scope().NewHistogram(spec)
 	assert.Error(t, err, "Expected an error from NewLatencies.")
 }
 
 func assertVectorHistogramSpecOK(t testing.TB, spec HistogramSpec) {
-	_, err := justRegistry(New()).NewHistogramVector(spec)
+	_, err := New().Scope().NewHistogramVector(spec)
 	assert.NoError(t, err, "Expected success from NewLatenciesVector.")
 }
 
 func assertVectorHistogramSpecFail(t testing.TB, spec HistogramSpec) {
-	_, err := justRegistry(New()).NewHistogramVector(spec)
+	_, err := New().Scope().NewHistogramVector(spec)
 	assert.Error(t, err, "Expected an error from NewLatenciesVector.")
 }

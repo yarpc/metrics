@@ -20,16 +20,15 @@
 
 package metrics
 
-// A Registry is a scoped metric registry. All metrics created with a Registry
-// will have the Registry's labels appended to them.
-type Registry struct {
-	core        *coreRegistry
+// A Scope is a collection of tagged metrics.
+type Scope struct {
+	core        *core
 	constLabels Labels
 }
 
-func newRegistry(core *coreRegistry, labels Labels) *Registry {
-	return &Registry{
-		core:        core,
+func newScope(c *core, labels Labels) *Scope {
+	return &Scope{
+		core:        c,
 		constLabels: labels,
 	}
 }
@@ -37,26 +36,26 @@ func newRegistry(core *coreRegistry, labels Labels) *Registry {
 // Labeled creates a new Registry with new constant labels appended to the
 // current Registry's existing labels. Label names and values are
 // automatically scrubbed, with invalid characters replaced by underscores.
-func (r *Registry) Labeled(ls Labels) *Registry {
-	if r == nil {
+func (s *Scope) Labeled(ls Labels) *Scope {
+	if s == nil {
 		return nil
 	}
-	newLabels := make(Labels, len(r.constLabels)+len(ls))
-	for k, v := range r.constLabels {
+	newLabels := make(Labels, len(s.constLabels)+len(ls))
+	for k, v := range s.constLabels {
 		newLabels[k] = v
 	}
 	for k, v := range ls {
 		newLabels[scrubName(k)] = scrubLabelValue(v)
 	}
-	return newRegistry(r.core, newLabels)
+	return newScope(s.core, newLabels)
 }
 
 // NewCounter constructs a new Counter.
-func (r *Registry) NewCounter(spec Spec) (*Counter, error) {
-	if r == nil {
+func (s *Scope) NewCounter(spec Spec) (*Counter, error) {
+	if s == nil {
 		return nil, nil
 	}
-	spec = r.addConstLabels(spec)
+	spec = s.addConstLabels(spec)
 	if err := spec.validateScalar(); err != nil {
 		return nil, err
 	}
@@ -65,18 +64,18 @@ func (r *Registry) NewCounter(spec Spec) (*Counter, error) {
 		return nil, err
 	}
 	c := newCounter(meta)
-	if err := r.core.register(c); err != nil {
+	if err := s.core.register(c); err != nil {
 		return nil, err
 	}
 	return c, nil
 }
 
 // NewGauge constructs a new Gauge.
-func (r *Registry) NewGauge(spec Spec) (*Gauge, error) {
-	if r == nil {
+func (s *Scope) NewGauge(spec Spec) (*Gauge, error) {
+	if s == nil {
 		return nil, nil
 	}
-	spec = r.addConstLabels(spec)
+	spec = s.addConstLabels(spec)
 	if err := spec.validateScalar(); err != nil {
 		return nil, err
 	}
@@ -85,18 +84,18 @@ func (r *Registry) NewGauge(spec Spec) (*Gauge, error) {
 		return nil, err
 	}
 	g := newGauge(meta)
-	if err := r.core.register(g); err != nil {
+	if err := s.core.register(g); err != nil {
 		return nil, err
 	}
 	return g, nil
 }
 
 // NewHistogram constructs a new Histogram.
-func (r *Registry) NewHistogram(spec HistogramSpec) (*Histogram, error) {
-	if r == nil {
+func (s *Scope) NewHistogram(spec HistogramSpec) (*Histogram, error) {
+	if s == nil {
 		return nil, nil
 	}
-	spec.Spec = r.addConstLabels(spec.Spec)
+	spec.Spec = s.addConstLabels(spec.Spec)
 	if err := spec.validateScalar(); err != nil {
 		return nil, err
 	}
@@ -105,18 +104,18 @@ func (r *Registry) NewHistogram(spec HistogramSpec) (*Histogram, error) {
 		return nil, err
 	}
 	h := newHistogram(meta, spec.Unit, spec.Buckets)
-	if err := r.core.register(h); err != nil {
+	if err := s.core.register(h); err != nil {
 		return nil, err
 	}
 	return h, nil
 }
 
 // NewCounterVector constructs a new CounterVector.
-func (r *Registry) NewCounterVector(spec Spec) (*CounterVector, error) {
-	if r == nil {
+func (s *Scope) NewCounterVector(spec Spec) (*CounterVector, error) {
+	if s == nil {
 		return nil, nil
 	}
-	spec = r.addConstLabels(spec)
+	spec = s.addConstLabels(spec)
 	if err := spec.validateVector(); err != nil {
 		return nil, err
 	}
@@ -125,18 +124,18 @@ func (r *Registry) NewCounterVector(spec Spec) (*CounterVector, error) {
 		return nil, err
 	}
 	cv := newCounterVector(meta)
-	if err := r.core.register(cv); err != nil {
+	if err := s.core.register(cv); err != nil {
 		return nil, err
 	}
 	return cv, nil
 }
 
 // NewGaugeVector constructs a new GaugeVector.
-func (r *Registry) NewGaugeVector(spec Spec) (*GaugeVector, error) {
-	if r == nil {
+func (s *Scope) NewGaugeVector(spec Spec) (*GaugeVector, error) {
+	if s == nil {
 		return nil, nil
 	}
-	spec = r.addConstLabels(spec)
+	spec = s.addConstLabels(spec)
 	if err := spec.validateVector(); err != nil {
 		return nil, err
 	}
@@ -145,18 +144,18 @@ func (r *Registry) NewGaugeVector(spec Spec) (*GaugeVector, error) {
 		return nil, err
 	}
 	gv := newGaugeVector(meta)
-	if err := r.core.register(gv); err != nil {
+	if err := s.core.register(gv); err != nil {
 		return nil, err
 	}
 	return gv, nil
 }
 
 // NewHistogramVector constructs a new HistogramVector.
-func (r *Registry) NewHistogramVector(spec HistogramSpec) (*HistogramVector, error) {
-	if r == nil {
+func (s *Scope) NewHistogramVector(spec HistogramSpec) (*HistogramVector, error) {
+	if s == nil {
 		return nil, nil
 	}
-	spec.Spec = r.addConstLabels(spec.Spec)
+	spec.Spec = s.addConstLabels(spec.Spec)
 	if err := spec.validateVector(); err != nil {
 		return nil, err
 	}
@@ -165,18 +164,18 @@ func (r *Registry) NewHistogramVector(spec HistogramSpec) (*HistogramVector, err
 		return nil, err
 	}
 	hv := newHistogramVector(meta, spec.Unit, spec.Buckets)
-	if err := r.core.register(hv); err != nil {
+	if err := s.core.register(hv); err != nil {
 		return nil, err
 	}
 	return hv, nil
 }
 
-func (r *Registry) addConstLabels(spec Spec) Spec {
-	if len(r.constLabels) == 0 {
+func (s *Scope) addConstLabels(spec Spec) Spec {
+	if len(s.constLabels) == 0 {
 		return spec
 	}
-	labels := make(Labels, len(r.constLabels)+len(spec.Labels))
-	for k, v := range r.constLabels {
+	labels := make(Labels, len(s.constLabels)+len(spec.Labels))
+	for k, v := range s.constLabels {
 		labels[k] = v
 	}
 	for k, v := range spec.Labels {
