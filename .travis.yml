@@ -4,9 +4,6 @@ go:
   - 1.8
   - 1.9
 go_import_path: go.uber.org/net/metrics
-env:
-  global:
-    - TEST_TIME_SCALE=10
 cache:
   directories:
     - vendor
