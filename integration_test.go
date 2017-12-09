@@ -37,11 +37,11 @@ import (
 	"go.uber.org/net/metrics/tallypush"
 )
 
-func initializeMetrics(t testing.TB, disablePush bool) *Controller {
-	root, controller := New()
-	reg := root.Labeled(Labels{"service": "users"})
+func initializeMetrics(t testing.TB, disablePush bool) *Root {
+	root := New()
+	scope := root.Scope().Labeled(Labels{"service": "users"})
 
-	counter, err := reg.NewCounter(Spec{
+	counter, err := scope.NewCounter(Spec{
 		Name:        "test_counter",
 		Help:        "counter help",
 		Labels:      Labels{"foo": "counter"},
@@ -50,7 +50,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Controller {
 	require.NoError(t, err, "Failed to create counter.")
 	counter.Inc()
 
-	counterVec, err := reg.NewCounterVector(Spec{
+	counterVec, err := scope.NewCounterVector(Spec{
 		Name:           "test_counter_vector",
 		Help:           "counter vector help",
 		Labels:         Labels{"foo": "counter_vector"},
@@ -67,7 +67,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Controller {
 		"baz", "bazval2",
 	).Inc()
 
-	gauge, err := reg.NewGauge(Spec{
+	gauge, err := scope.NewGauge(Spec{
 		Name:        "test_gauge",
 		Help:        "gauge help",
 		Labels:      Labels{"foo": "gauge"},
@@ -76,7 +76,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Controller {
 	require.NoError(t, err, "Failed to create gauge.")
 	gauge.Store(42)
 
-	gaugeVec, err := reg.NewGaugeVector(Spec{
+	gaugeVec, err := scope.NewGaugeVector(Spec{
 		Name:           "test_gauge_vector",
 		Help:           "gauge vector help",
 		Labels:         Labels{"foo": "gauge_vector"},
@@ -93,7 +93,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Controller {
 		"baz", "bazval2",
 	).Store(20)
 
-	hist, err := reg.NewHistogram(HistogramSpec{
+	hist, err := scope.NewHistogram(HistogramSpec{
 		Spec: Spec{
 			Name:        "test_histogram",
 			Help:        "histogram help",
@@ -106,7 +106,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Controller {
 	require.NoError(t, err, "Failed to create histogram.")
 	hist.Observe(time.Millisecond)
 
-	histVec, err := reg.NewHistogramVector(HistogramSpec{
+	histVec, err := scope.NewHistogramVector(HistogramSpec{
 		Spec: Spec{
 			Name:           "test_histogram_vector",
 			Help:           "histogram vector help",
@@ -127,21 +127,21 @@ func initializeMetrics(t testing.TB, disablePush bool) *Controller {
 		"baz", "bazval2",
 	).Observe(time.Millisecond)
 
-	return controller
+	return root
 }
 
-func snapshot(t testing.TB, controller *Controller) tally.Snapshot {
-	scope := tally.NewTestScope("" /* prefix */, nil /* tags */)
-	stop, err := controller.Push(tallypush.New(scope), 10*time.Millisecond)
+func snapshot(t testing.TB, root *Root) tally.Snapshot {
+	tallyScope := tally.NewTestScope("" /* prefix */, nil /* tags */)
+	stop, err := root.Push(tallypush.New(tallyScope), 10*time.Millisecond)
 	require.NoError(t, err, "Couldn't start Tally push.")
 
-	_, err = controller.Push(tallypush.New(scope), 10*time.Millisecond)
+	_, err = root.Push(tallypush.New(tallyScope), 10*time.Millisecond)
 	require.Error(t, err, "Shoudn't be able to run multiple push goroutines concurrently.")
 
 	time.Sleep(100 * time.Millisecond)
 	stop()
 
-	return scope.Snapshot()
+	return tallyScope.Snapshot()
 }
 
 func TestTallyEndToEnd(t *testing.T) {
@@ -149,8 +149,8 @@ func TestTallyEndToEnd(t *testing.T) {
 	// keys, we're only going to explicitly assert the values.
 
 	t.Run("export disabled", func(t *testing.T) {
-		controller := initializeMetrics(t, true)
-		snap := snapshot(t, controller)
+		root := initializeMetrics(t, true)
+		snap := snapshot(t, root)
 		assert.Zero(
 			t,
 			len(snap.Timers())+len(snap.Counters())+len(snap.Gauges())+len(snap.Histograms()),
@@ -159,8 +159,8 @@ func TestTallyEndToEnd(t *testing.T) {
 	})
 
 	t.Run("export enabled", func(t *testing.T) {
-		controller := initializeMetrics(t, false)
-		snap := snapshot(t, controller)
+		root := initializeMetrics(t, false)
+		snap := snapshot(t, root)
 		assert.Zero(t, len(snap.Timers()), "Shouldn't export any timers.")
 
 		counters := snap.Counters()
@@ -232,10 +232,10 @@ func scrape(t testing.TB, handler http.Handler) (int, string) {
 	return resp.StatusCode, strings.TrimSpace(string(body))
 }
 
-// assertPrometheus asserts that the controller's scrape endpoint successfully
+// assertPrometheus asserts that the root's scrape endpoint successfully
 // serves the supplied plain-text Prometheus metrics.
-func assertPrometheus(t testing.TB, controller *Controller, expected string) {
-	code, actual := scrape(t, controller)
+func assertPrometheus(t testing.TB, root *Root, expected string) {
+	code, actual := scrape(t, root)
 	assert.Equal(t, http.StatusOK, code, "Unexpected HTTP response code from Prometheus scrape.")
 	assert.Equal(
 		t,
@@ -246,11 +246,11 @@ func assertPrometheus(t testing.TB, controller *Controller, expected string) {
 }
 
 func TestPrometheusEndToEnd(t *testing.T) {
-	controller := initializeMetrics(t, false)
+	root := initializeMetrics(t, false)
 	// This fixture was generated by the vanilla Prometheus client. Keeping this
 	// test passing verifies that data exposed by net/metrics is
 	// indistinguishable from data exposed by the official Prometheus clients.
 	bs, err := ioutil.ReadFile("testdata/proto_integration_test.txt")
 	require.NoError(t, err, "Failed to open test fixture.")
-	assertPrometheus(t, controller, string(bs))
+	assertPrometheus(t, root, string(bs))
 }

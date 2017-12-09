@@ -31,8 +31,8 @@ import (
 
 const _defaultCollectionSize = 128
 
-// A coreRegistry is a collection of metrics. Uniqueness is enforced with two
-// checks, just like the vanilla Prometheus client:
+// A core is a collection of metrics. Uniqueness is enforced with two checks,
+// just like the vanilla Prometheus client:
 //
 // First, any two metrics with the same name must have the same label names
 // (both constant and variable).
@@ -42,7 +42,7 @@ const _defaultCollectionSize = 128
 //
 // The test suite for metric uniqueness is well-commented and explores the
 // consequences of these two rules.
-type coreRegistry struct {
+type core struct {
 	sync.RWMutex
 
 	dimsByName map[string]string
@@ -51,8 +51,8 @@ type coreRegistry struct {
 	gatherer   prometheus.Gatherer
 }
 
-func newCoreRegistry() *coreRegistry {
-	c := &coreRegistry{
+func newCore() *core {
+	c := &core{
 		dimsByName: make(map[string]string, _defaultCollectionSize),
 		ids:        make(map[string]struct{}, _defaultCollectionSize),
 		metrics:    make([]metric, 0, _defaultCollectionSize),
@@ -69,7 +69,7 @@ func newCoreRegistry() *coreRegistry {
 	return c
 }
 
-func (c *coreRegistry) register(m metric) error {
+func (c *core) register(m metric) error {
 	id := newDigester()
 	defer id.free()
 
@@ -95,10 +95,10 @@ func (c *coreRegistry) register(m metric) error {
 	return nil
 }
 
-func (c *coreRegistry) snapshot() *RegistrySnapshot {
+func (c *core) snapshot() *RootSnapshot {
 	c.RLock()
 	defer c.RUnlock()
-	s := &RegistrySnapshot{}
+	s := &RootSnapshot{}
 	for _, m := range c.metrics {
 		s.add(m)
 	}
@@ -106,7 +106,7 @@ func (c *coreRegistry) snapshot() *RegistrySnapshot {
 	return s
 }
 
-func (c *coreRegistry) push(target push.Target) {
+func (c *core) push(target push.Target) {
 	c.RLock()
 	for _, m := range c.metrics {
 		m.push(target)

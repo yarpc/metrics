@@ -32,34 +32,51 @@ import (
 	"go.uber.org/atomic"
 )
 
-// Controller has the ability to expose the metrics that are registered against
-// the registry this controller was created with.
-type Controller struct {
-	*coreRegistry
+// An Option configures a Root. Currently, there are no exported Options.
+type Option interface {
+	unimplemented()
+}
 
+// A Root is a collection of tagged metrics that can be exposed via in-memory
+// snapshots, push-based telemetry systems, or a Prometheus-compatible HTTP
+// handler.
+type Root struct {
+	*core
+
+	scope   *Scope
 	pushing atomic.Bool // can only push to one target
 	handler http.Handler
 }
 
-func newController(core *coreRegistry) *Controller {
-	return &Controller{
-		coreRegistry: core,
+// New constructs a Root.
+func New(opts ...Option) *Root {
+	core := newCore()
+	return &Root{
+		core:  core,
+		scope: newScope(core, Labels{}),
 		handler: promhttp.HandlerFor(core.gatherer, promhttp.HandlerOpts{
 			ErrorHandling: promhttp.HTTPErrorOnError, // 500 on errors
 		}),
 	}
 }
 
+// Scope exposes the Root's top-level metrics collection. Tagged sub-scopes
+// and individual counters, gauges, histograms, and vectors can be created
+// from this top-level Scope.
+func (r *Root) Scope() *Scope {
+	return r.scope
+}
+
 // ServeHTTP implements http.Handler.
-func (c *Controller) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	c.handler.ServeHTTP(w, req)
+func (r *Root) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	r.handler.ServeHTTP(w, req)
 }
 
 // Snapshot returns a point-in-time view of all the metrics contained in the
-// controller's registry. It's safe to use concurrently, but is relatively
+// root (and all its scopes). It's safe to use concurrently, but is relatively
 // expensive and designed for use in unit tests.
-func (c *Controller) Snapshot() *RegistrySnapshot {
-	return c.snapshot()
+func (r *Root) Snapshot() *RootSnapshot {
+	return r.snapshot()
 }
 
 // Push starts a goroutine that periodically exports all registered metrics to
@@ -68,11 +85,11 @@ func (c *Controller) Snapshot() *RegistrySnapshot {
 // push.Target.
 //
 // The returned function cleanly shuts down the background goroutine.
-func (c *Controller) Push(target push.Target, tick time.Duration) (context.CancelFunc, error) {
-	if c.pushing.Swap(true) {
+func (r *Root) Push(target push.Target, tick time.Duration) (context.CancelFunc, error) {
+	if r.pushing.Swap(true) {
 		return nil, errors.New("already pushing")
 	}
-	pusher := newPusher(c.coreRegistry, target, tick)
+	pusher := newPusher(r.core, target, tick)
 	go pusher.Start()
 	// We don't want to set c.pushing to false when we stop the push loop,
 	// because that would let users start another pusher. Since pushers are

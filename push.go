@@ -27,14 +27,14 @@ import (
 )
 
 type pusher struct {
-	core    *coreRegistry
+	core    *core
 	stop    chan struct{}
 	stopped chan struct{}
 	ticker  *time.Ticker
 	target  push.Target
 }
 
-func newPusher(c *coreRegistry, target push.Target, tick time.Duration) *pusher {
+func newPusher(c *core, target push.Target, tick time.Duration) *pusher {
 	return &pusher{
 		core:    c,
 		stop:    make(chan struct{}),

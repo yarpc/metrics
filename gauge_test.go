@@ -28,11 +28,11 @@ import (
 )
 
 func TestGauge(t *testing.T) {
-	r, c := New()
-	r = r.Labeled(Labels{"service": "users"})
+	root := New()
+	s := root.Scope().Labeled(Labels{"service": "users"})
 
 	t.Run("duplicate constant labels", func(t *testing.T) {
-		_, err := r.NewGauge(Spec{
+		_, err := s.NewGauge(Spec{
 			Name:   "test_gauge",
 			Help:   "help",
 			Labels: Labels{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate label names
@@ -41,7 +41,7 @@ func TestGauge(t *testing.T) {
 	})
 
 	t.Run("valid spec", func(t *testing.T) {
-		gauge, err := r.NewGauge(Spec{
+		gauge, err := s.NewGauge(Spec{
 			Name:   "test_gauge",
 			Help:   "Some help.",
 			Labels: Labels{"foo": "bar"},
@@ -56,7 +56,7 @@ func TestGauge(t *testing.T) {
 		assert.Equal(t, int64(42), gauge.Load(), "Unexpected in-memory gauge value.")
 
 		assert.True(t, gauge.CAS(42, 43), "Unexpected return value from CAS.")
-		snap := c.Snapshot()
+		snap := root.Snapshot()
 		require.Equal(t, 1, len(snap.Gauges), "Unexpected number of gauges.")
 		assert.Equal(t, Snapshot{
 			Name:   "test_gauge",
@@ -67,20 +67,20 @@ func TestGauge(t *testing.T) {
 }
 
 func TestGaugeVector(t *testing.T) {
-	newVector := func() (*GaugeVector, *Controller) {
-		r, c := New()
+	newVector := func() (*GaugeVector, *Root) {
+		root := New()
 		spec := Spec{
 			Name:           "test_gauge",
 			Help:           "Some help.",
 			VariableLabels: []string{"var"},
 		}
-		vec, err := r.NewGaugeVector(spec)
+		vec, err := root.Scope().NewGaugeVector(spec)
 		require.NoError(t, err, "Unexpected error constructing vector.")
-		return vec, c
+		return vec, root
 	}
 
-	assertGauge := func(c *Controller, expectedLabel string, expectedReading int64) {
-		snap := c.Snapshot()
+	assertGauge := func(root *Root, expectedLabel string, expectedReading int64) {
+		snap := root.Snapshot()
 		require.Equal(t, 1, len(snap.Gauges), "Unexpected number of gauges.")
 		got := snap.Gauges[0]
 		assert.Equal(t, "test_gauge", got.Name, "Unexpected name.")
@@ -89,18 +89,18 @@ func TestGaugeVector(t *testing.T) {
 	}
 
 	t.Run("valid labels", func(t *testing.T) {
-		vec, c := newVector()
+		vec, root := newVector()
 		g, err := vec.Get("var", "x")
 		require.NoError(t, err, "Unexpected error getting gauge.")
 
 		g.Store(1)
 		vec.MustGet("var", "x").Add(2)
 
-		assertGauge(c, "x", 3)
+		assertGauge(root, "x", 3)
 	})
 
 	t.Run("invalid labels", func(t *testing.T) {
-		vec, c := newVector()
+		vec, root := newVector()
 		g, err := vec.Get("var", "x!")
 		require.NoError(t, err, "Unexpected error getting gauge.")
 
@@ -108,7 +108,7 @@ func TestGaugeVector(t *testing.T) {
 		vec.MustGet("var", "x!").Inc()
 		vec.MustGet("var", "x&").Inc()
 
-		assertGauge(c, "x_", 3)
+		assertGauge(root, "x_", 3)
 	})
 
 	t.Run("cardinality mismatch", func(t *testing.T) {
@@ -122,10 +122,10 @@ func TestGaugeVector(t *testing.T) {
 }
 
 func TestGaugeVectorConstructionErrors(t *testing.T) {
-	r, _ := New()
+	s := New().Scope()
 
 	t.Run("duplicate constant label names", func(t *testing.T) {
-		_, err := r.NewGaugeVector(Spec{
+		_, err := s.NewGaugeVector(Spec{
 			Name:           "test_gauge",
 			Help:           "help",
 			Labels:         Labels{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate label names
@@ -135,7 +135,7 @@ func TestGaugeVectorConstructionErrors(t *testing.T) {
 	})
 
 	t.Run("duplicate variable label names", func(t *testing.T) {
-		_, err := r.NewGaugeVector(Spec{
+		_, err := s.NewGaugeVector(Spec{
 			Name:           "test_gauge",
 			Help:           "help",
 			VariableLabels: []string{"var", "var"},

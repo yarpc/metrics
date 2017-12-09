@@ -29,25 +29,25 @@ import (
 )
 
 func TestScalarMetricDuplicates(t *testing.T) {
-	r, _ := New()
+	scope := New().Scope()
 	spec := Spec{
 		Name: "foo",
 		Help: "help",
 	}
-	_, err := r.NewCounter(spec)
+	_, err := scope.NewCounter(spec)
 	assert.NoError(t, err, "Failed first registration.")
 
 	t.Run("same type", func(t *testing.T) {
 		// You can't reuse specs with the same metric type.
-		_, err := r.NewCounter(spec)
+		_, err := scope.NewCounter(spec)
 		assert.Error(t, err)
 	})
 
 	t.Run("different type", func(t *testing.T) {
 		// Even if you change the metric type, you still can't re-use metadata.
-		_, err := r.NewGauge(spec)
+		_, err := scope.NewGauge(spec)
 		assert.Error(t, err)
-		_, err = r.NewHistogram(HistogramSpec{
+		_, err = scope.NewHistogram(HistogramSpec{
 			Spec:    spec,
 			Unit:    time.Nanosecond,
 			Buckets: []int64{1, 2},
@@ -57,7 +57,7 @@ func TestScalarMetricDuplicates(t *testing.T) {
 
 	t.Run("different help", func(t *testing.T) {
 		// Changing the help string doesn't change the metric's identity.
-		_, err := r.NewCounter(Spec{
+		_, err := scope.NewCounter(Spec{
 			Name: "foo",
 			Help: "different help",
 		})
@@ -66,7 +66,7 @@ func TestScalarMetricDuplicates(t *testing.T) {
 
 	t.Run("added dimensions", func(t *testing.T) {
 		// Can't have the same metric name with added dimensions.
-		_, err := r.NewCounter(Spec{
+		_, err := scope.NewCounter(Spec{
 			Name:   "foo",
 			Help:   "help",
 			Labels: Labels{"bar": "baz"},
@@ -77,13 +77,13 @@ func TestScalarMetricDuplicates(t *testing.T) {
 	t.Run("different dimensions", func(t *testing.T) {
 		// Even if the number of dimensions is the same, metrics with the same
 		// name must have the same dimensions.
-		_, err := r.NewCounter(Spec{
+		_, err := scope.NewCounter(Spec{
 			Name:   "dimensions",
 			Help:   "help",
 			Labels: Labels{"bar": "baz"},
 		})
 		assert.NoError(t, err, "Failed to register new metric.")
-		_, err = r.NewCounter(Spec{
+		_, err = scope.NewCounter(Spec{
 			Name:   "dimensions",
 			Help:   "help",
 			Labels: Labels{"bing": "quux"},
@@ -96,7 +96,7 @@ func TestScalarMetricDuplicates(t *testing.T) {
 		// change. This allows users to (inefficiently) create what are
 		// effectively vectors - a collection of metrics with the same name and
 		// label names, but different label values.
-		_, err := r.NewCounter(Spec{
+		_, err := scope.NewCounter(Spec{
 			Name:   "dimensions",
 			Help:   "help",
 			Labels: Labels{"bar": "quux"},
@@ -106,12 +106,12 @@ func TestScalarMetricDuplicates(t *testing.T) {
 
 	t.Run("duplicate scrubbed name", func(t *testing.T) {
 		// Uniqueness is enforced after the metric name is scrubbed.
-		_, err := r.NewCounter(Spec{
+		_, err := scope.NewCounter(Spec{
 			Name: "scrubbed_name",
 			Help: "help",
 		})
 		assert.NoError(t, err, "Failed to register new metric.")
-		_, err = r.NewCounter(Spec{
+		_, err = scope.NewCounter(Spec{
 			Name: "scrubbed&name",
 			Help: "help",
 		})
@@ -120,13 +120,13 @@ func TestScalarMetricDuplicates(t *testing.T) {
 
 	t.Run("duplicate scrubbed dimensions", func(t *testing.T) {
 		// Uniqueness is enforced after labels are scrubbed.
-		_, err := r.NewCounter(Spec{
+		_, err := scope.NewCounter(Spec{
 			Name:   "scrubbed_dimensions",
 			Help:   "help",
 			Labels: Labels{"b_r": "baz"},
 		})
 		assert.NoError(t, err, "Failed to register new metric.")
-		_, err = r.NewCounter(Spec{
+		_, err = scope.NewCounter(Spec{
 			Name:   "scrubbed_dimensions",
 			Help:   "help",
 			Labels: Labels{"b&r": "baz"},
@@ -137,7 +137,7 @@ func TestScalarMetricDuplicates(t *testing.T) {
 	t.Run("constant label name specified twice", func(t *testing.T) {
 		// Within a single user-supplied set of labels, scrubbing may not
 		// introduce duplicates.
-		_, err = r.NewCounter(Spec{
+		_, err = scope.NewCounter(Spec{
 			Name:   "user_error_constant_labels",
 			Help:   "help",
 			Labels: Labels{"b_r": "baz", "b&r": "baz"},
@@ -147,26 +147,26 @@ func TestScalarMetricDuplicates(t *testing.T) {
 }
 
 func TestVectorMetricDuplicates(t *testing.T) {
-	r, _ := New()
+	scope := New().Scope()
 	spec := Spec{
 		Name:           "foo",
 		Help:           "help",
 		VariableLabels: []string{"foo"},
 	}
-	_, err := r.NewCounterVector(spec)
+	_, err := scope.NewCounterVector(spec)
 	assert.NoError(t, err, "Failed first registration.")
 
 	t.Run("same type", func(t *testing.T) {
 		// You can't reuse specs with the same metric type.
-		_, err := r.NewCounterVector(spec)
+		_, err := scope.NewCounterVector(spec)
 		assert.Error(t, err, "Unexpected success re-using vector metrics metadata.")
 	})
 
 	t.Run("different type", func(t *testing.T) {
 		// Even if you change the metric type, you still can't re-use metadata.
-		_, err := r.NewGaugeVector(spec)
+		_, err := scope.NewGaugeVector(spec)
 		assert.Error(t, err, "Unexpected success re-using vector metrics metadata.")
-		_, err = r.NewHistogramVector(HistogramSpec{
+		_, err = scope.NewHistogramVector(HistogramSpec{
 			Spec:    spec,
 			Unit:    time.Nanosecond,
 			Buckets: []int64{1, 2},
@@ -177,14 +177,14 @@ func TestVectorMetricDuplicates(t *testing.T) {
 	t.Run("different type and mixed labels", func(t *testing.T) {
 		// If we change the type and make some constant labels variable, we still
 		// can't re-use metadata.
-		_, err := r.NewCounterVector(Spec{
+		_, err := scope.NewCounterVector(Spec{
 			Name:           "test_different_type_mixed_labels",
 			Help:           "help",
 			Labels:         Labels{"foo": "ok"},
 			VariableLabels: []string{"bar"},
 		})
 		require.NoError(t, err, "Failed to create initial metric.")
-		_, err = r.NewGaugeVector(Spec{
+		_, err = scope.NewGaugeVector(Spec{
 			Name:           "test_different_type_mixed_labels",
 			Help:           "help",
 			VariableLabels: []string{"foo", "bar"},
@@ -194,7 +194,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 
 	t.Run("different help", func(t *testing.T) {
 		// Changing the help string doesn't change the metric's identity.
-		_, err := r.NewCounterVector(Spec{
+		_, err := scope.NewCounterVector(Spec{
 			Name:           "foo",
 			Help:           "different help",
 			VariableLabels: []string{"foo"},
@@ -204,14 +204,14 @@ func TestVectorMetricDuplicates(t *testing.T) {
 
 	t.Run("added dimensions", func(t *testing.T) {
 		// Can't have the same metric name with added dimensions.
-		_, err := r.NewCounterVector(Spec{
+		_, err := scope.NewCounterVector(Spec{
 			Name:           "foo",
 			Help:           "help",
 			VariableLabels: []string{"foo"},
 			Labels:         Labels{"bar": "baz"},
 		})
 		assert.Error(t, err, "Shouldn't be able to add constant labels.")
-		_, err = r.NewCounterVector(Spec{
+		_, err = scope.NewCounterVector(Spec{
 			Name:           "foo",
 			Help:           "help",
 			VariableLabels: []string{"foo", "bar"},
@@ -222,7 +222,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 	t.Run("different dimensions", func(t *testing.T) {
 		// Even if the number of dimensions is the same, metrics with the same
 		// name must have the same dimensions.
-		_, err := r.NewCounterVector(Spec{
+		_, err := scope.NewCounterVector(Spec{
 			Name:           "foo",
 			Help:           "help",
 			VariableLabels: []string{"bar"},
@@ -234,14 +234,14 @@ func TestVectorMetricDuplicates(t *testing.T) {
 		// If a metric has the same name and dimensions, the label values
 		// may change. (Again, this would be more efficiently modeled as a
 		// higher-dimensionality vector.)
-		_, err := r.NewCounterVector(Spec{
+		_, err := scope.NewCounterVector(Spec{
 			Name:           "dimensions",
 			Help:           "help",
 			Labels:         Labels{"bar": "baz"},
 			VariableLabels: []string{"foo"},
 		})
 		assert.NoError(t, err)
-		_, err = r.NewCounterVector(Spec{
+		_, err = scope.NewCounterVector(Spec{
 			Name:           "dimensions",
 			Help:           "help",
 			Labels:         Labels{"bar": "quux"},
@@ -257,7 +257,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 		// carte scalars.
 
 		// dims: foo, baz
-		_, err := r.NewCounterVector(Spec{
+		_, err := scope.NewCounterVector(Spec{
 			Name:           "ownership",
 			Help:           "help",
 			Labels:         Labels{"foo": "bar"},
@@ -266,7 +266,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 		require.NoError(t, err)
 
 		// same dims
-		_, err = r.NewCounter(Spec{
+		_, err = scope.NewCounter(Spec{
 			Name:   "ownership",
 			Help:   "help",
 			Labels: Labels{"foo": "bar", "baz": "quux"},
@@ -276,13 +276,13 @@ func TestVectorMetricDuplicates(t *testing.T) {
 
 	t.Run("duplicate scrubbed name", func(t *testing.T) {
 		// Uniqueness is enforced after the metric name is scrubbed.
-		_, err := r.NewCounterVector(Spec{
+		_, err := scope.NewCounterVector(Spec{
 			Name:           "scrubbed_name",
 			Help:           "help",
 			VariableLabels: []string{"bar"},
 		})
 		assert.NoError(t, err, "Failed to register new metric.")
-		_, err = r.NewCounterVector(Spec{
+		_, err = scope.NewCounterVector(Spec{
 			Name:           "scrubbed&name",
 			Help:           "help",
 			VariableLabels: []string{"bar"},
@@ -292,14 +292,14 @@ func TestVectorMetricDuplicates(t *testing.T) {
 
 	t.Run("duplicate scrubbed dimensions", func(t *testing.T) {
 		// Uniqueness is enforced after labels are scrubbed.
-		_, err := r.NewCounterVector(Spec{
+		_, err := scope.NewCounterVector(Spec{
 			Name:           "scrubbed_dimensions",
 			Help:           "help",
 			Labels:         Labels{"b_r": "baz"},
 			VariableLabels: []string{"q__x"},
 		})
 		assert.NoError(t, err, "Failed to register new metric.")
-		_, err = r.NewCounterVector(Spec{
+		_, err = scope.NewCounterVector(Spec{
 			Name:           "scrubbed_dimensions",
 			Help:           "help",
 			Labels:         Labels{"b&r": "baz"},
@@ -311,7 +311,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 	t.Run("constant label name specified twice", func(t *testing.T) {
 		// Within a single user-supplied set of constant labels, scrubbing may not
 		// introduce duplicates.
-		_, err = r.NewCounterVector(Spec{
+		_, err = scope.NewCounterVector(Spec{
 			Name:           "user_error_constant_labels",
 			Help:           "help",
 			Labels:         Labels{"b_r": "baz", "b&r": "baz"},
@@ -323,7 +323,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 	t.Run("variable label name specified twice", func(t *testing.T) {
 		// Within a single user-supplied set of variable labels, scrubbing may not
 		// introduce duplicates.
-		_, err = r.NewCounterVector(Spec{
+		_, err = scope.NewCounterVector(Spec{
 			Name:           "user_error_variable_labels",
 			Help:           "help",
 			VariableLabels: []string{"f__", "f&&"},
@@ -332,7 +332,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 	})
 
 	t.Run("constant and variable label name overlap", func(t *testing.T) {
-		_, err = r.NewCounterVector(Spec{
+		_, err = scope.NewCounterVector(Spec{
 			Name:           "user_error_label_overlaps",
 			Help:           "help",
 			Labels:         Labels{"foo": "one"},
@@ -343,14 +343,14 @@ func TestVectorMetricDuplicates(t *testing.T) {
 }
 
 func TestLabeledPrecedence(t *testing.T) {
-	r, c := New()
-	r = r.Labeled(Labels{"foo": "bar"}).Labeled(Labels{"foo": "baz"})
-	_, err := r.NewCounter(Spec{
+	root := New()
+	scope := root.Scope().Labeled(Labels{"foo": "bar"}).Labeled(Labels{"foo": "baz"})
+	_, err := scope.NewCounter(Spec{
 		Name: "test_counter",
 		Help: "help",
 	})
 	require.NoError(t, err, "Failed to create counter.")
-	snap := c.Snapshot()
+	snap := root.Snapshot()
 	require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
 	assert.Equal(t, Snapshot{
 		Name:   "test_counter",
@@ -359,13 +359,13 @@ func TestLabeledPrecedence(t *testing.T) {
 }
 
 func TestLabeledAutoScrubbing(t *testing.T) {
-	r, c := New()
-	r = r.Labeled(Labels{
+	root := New()
+	scope := root.Scope().Labeled(Labels{
 		"invalid-prometheus-name": "foo",
 		"tally":                   "invalid!value",
 		"valid":                   "ok",
 	})
-	vec, err := r.NewCounterVector(Spec{
+	vec, err := scope.NewCounterVector(Spec{
 		Name:           "test_counter",
 		Help:           "help",
 		VariableLabels: []string{"invalid_var_name!"},
@@ -373,7 +373,7 @@ func TestLabeledAutoScrubbing(t *testing.T) {
 	vec.MustGet("invalid_var_name!", "ok").Inc()
 
 	require.NoError(t, err, "Failed to create counter.")
-	snap := c.Snapshot()
+	snap := root.Snapshot()
 	require.Equal(t, 1, len(snap.Counters), "Unexpected number of counters.")
 	assert.Equal(t, Snapshot{
 		Name: "test_counter",
@@ -389,8 +389,8 @@ func TestLabeledAutoScrubbing(t *testing.T) {
 
 func TestLabelScrubbingUniqueness(t *testing.T) {
 	t.Run("duplicate const names", func(t *testing.T) {
-		r, _ := New()
-		_, err := r.NewCounter(Spec{
+		scope := New().Scope()
+		_, err := scope.NewCounter(Spec{
 			Name: "test",
 			Help: "help",
 			Labels: Labels{
@@ -401,8 +401,8 @@ func TestLabelScrubbingUniqueness(t *testing.T) {
 		assert.Error(t, err, "Expected error when scrubbing duplicates label names.")
 	})
 	t.Run("duplicate variable names", func(t *testing.T) {
-		r, _ := New()
-		_, err := r.NewCounterVector(Spec{
+		scope := New().Scope()
+		_, err := scope.NewCounterVector(Spec{
 			Name:           "test",
 			Help:           "help",
 			VariableLabels: []string{"foo_bar", "foo!bar"},
