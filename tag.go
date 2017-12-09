@@ -28,11 +28,9 @@ import (
 	promproto "github.com/prometheus/client_model/go"
 )
 
+// Placeholders for empty tag names and values.
 const (
-	// DefaultTagName is used in place of empty tag names.
-	DefaultTagName = "default"
-
-	// DefaultTagValue is used in place of empty tag values.
+	DefaultTagName  = "default"
 	DefaultTagValue = "default"
 )
 
@@ -111,10 +109,10 @@ func (t Tags) addToDigester(d *digester) {
 // IsValidName checks whether the supplied string is a valid metric and tag
 // name in both Prometheus and Tally.
 //
-// Tally and Prometheus each allow runes that the other doesn't, so
-// net/metrics can accept only the common subset. For simplicity, we'd also
-// like the rules for metric names and tag names to be the same even if that's
-// more restrictive than absolutely necessary.
+// Tally and Prometheus each allow runes that the other doesn't, so this
+// package can accept only the common subset. For simplicity, we'd also like
+// the rules for metric names and tag names to be the same even if that's more
+// restrictive than absolutely necessary.
 //
 // Tally allows anything matching the regexp `^[0-9A-z_\-]+$`. Prometheus
 // allows the regexp `^[A-z_:][0-9A-z_:]*$` for metric names, and

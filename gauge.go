@@ -29,9 +29,8 @@ import (
 )
 
 // A Gauge is a point-in-time measurement, like a car's speedometer. All its
-// exported methods are safe to use concurrently.
-//
-// Nil *Gauges are safe no-op implementations.
+// exported methods are safe to use concurrently, and nil *Gauges are safe
+// no-op implementations.
 type Gauge struct {
 	val    value
 	pusher push.Gauge
@@ -81,9 +80,10 @@ func (g *Gauge) Swap(n int64) int64 {
 	return g.val.Swap(n)
 }
 
-// CAS is a compare-and-swap. It compares the current value to the old value
-// supplied, and if they match it stores the new value. The return value
-// indicates whether the swap succeeded.
+// CAS is an atomic compare-and-swap. It compares the current value to the old
+// value supplied, and if they match it stores the new value. The return value
+// indicates whether the swap succeeded. To avoid endless CAS loops, no-op
+// gauges always return true.
 func (g *Gauge) CAS(old, new int64) bool {
 	if g == nil {
 		return true
@@ -91,7 +91,7 @@ func (g *Gauge) CAS(old, new int64) bool {
 	return g.val.CAS(old, new)
 }
 
-// Store changes the gauge's value.
+// Store sets the gauge's value.
 func (g *Gauge) Store(n int64) {
 	if g != nil {
 		g.val.Store(n)
@@ -146,9 +146,8 @@ func (g *Gauge) push(target push.Target) {
 
 // A GaugeVector is a collection of Gauges that share a name and some constant
 // tags, but also have a consistent set of variable tags. All exported methods
-// are safe to use concurrently.
-//
-// A nil *GaugeVector is safe to use, and always returns no-op gauges.
+// are safe to use concurrently. Nil *GaugeVectors are safe to use and always
+// return no-op gauges.
 //
 // For a general description of vector types, see the package-level
 // documentation.

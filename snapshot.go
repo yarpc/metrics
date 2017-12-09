@@ -56,7 +56,7 @@ func (l HistogramSnapshot) less(other HistogramSnapshot) bool {
 }
 
 // A RootSnapshot exposes all the metrics contained in a Root and all its
-// Scopes. It's useful in tests, but shouldn't be used in production code.
+// Scopes. It's useful in tests, but relatively expensive to construct.
 type RootSnapshot struct {
 	Counters   []Snapshot
 	Gauges     []Snapshot

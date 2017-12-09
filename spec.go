@@ -70,12 +70,11 @@ func (s Spec) validateVector() error {
 type HistogramSpec struct {
 	Spec
 
-	// Durations are exported to Prometheus as simple numbers, not strings or
-	// rich objects. Unit specifies the desired granularity for latency
-	// observations. For example, an observation of time.Second with a unit of
-	// time.Millisecond is exported to Prometheus as 1000. Typically, the unit
-	// should also be part of the metric name; in this example, latency_ms is a
-	// good name.
+	// Durations are exposed as simple numbers, not strings or rich objects.
+	// Unit specifies the desired granularity for latency observations. For
+	// example, an observation of time.Second with a unit of time.Millisecond is
+	// exposed as 1000. Typically, the unit should also be part of the metric
+	// name.
 	Unit time.Duration
 	// Upper bounds (inclusive) for the histogram buckets. A catch-all bucket
 	// for large observations is automatically created, if necessary.

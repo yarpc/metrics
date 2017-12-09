@@ -33,9 +33,9 @@ func newScope(c *core, tags Tags) *Scope {
 	}
 }
 
-// Tagged creates a new Registry with new constant tags appended to the
-// current Registry's existing tags. Tag names and values are automatically
-// scrubbed, with invalid characters replaced by underscores.
+// Tagged creates a new scope with new constant tags merged into the existing
+// tags (if any). Tag names and values are automatically scrubbed, with
+// invalid characters replaced by underscores.
 func (s *Scope) Tagged(tags Tags) *Scope {
 	if s == nil {
 		return nil
