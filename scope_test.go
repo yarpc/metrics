@@ -34,20 +34,20 @@ func TestScalarMetricDuplicates(t *testing.T) {
 		Name: "foo",
 		Help: "help",
 	}
-	_, err := scope.NewCounter(spec)
+	_, err := scope.Counter(spec)
 	assert.NoError(t, err, "Failed first registration.")
 
 	t.Run("same type", func(t *testing.T) {
 		// You can't reuse specs with the same metric type.
-		_, err := scope.NewCounter(spec)
+		_, err := scope.Counter(spec)
 		assert.Error(t, err)
 	})
 
 	t.Run("different type", func(t *testing.T) {
 		// Even if you change the metric type, you still can't re-use metadata.
-		_, err := scope.NewGauge(spec)
+		_, err := scope.Gauge(spec)
 		assert.Error(t, err)
-		_, err = scope.NewHistogram(HistogramSpec{
+		_, err = scope.Histogram(HistogramSpec{
 			Spec:    spec,
 			Unit:    time.Nanosecond,
 			Buckets: []int64{1, 2},
@@ -57,7 +57,7 @@ func TestScalarMetricDuplicates(t *testing.T) {
 
 	t.Run("different help", func(t *testing.T) {
 		// Changing the help string doesn't change the metric's identity.
-		_, err := scope.NewCounter(Spec{
+		_, err := scope.Counter(Spec{
 			Name: "foo",
 			Help: "different help",
 		})
@@ -66,7 +66,7 @@ func TestScalarMetricDuplicates(t *testing.T) {
 
 	t.Run("added dimensions", func(t *testing.T) {
 		// Can't have the same metric name with added dimensions.
-		_, err := scope.NewCounter(Spec{
+		_, err := scope.Counter(Spec{
 			Name:      "foo",
 			Help:      "help",
 			ConstTags: Tags{"bar": "baz"},
@@ -77,13 +77,13 @@ func TestScalarMetricDuplicates(t *testing.T) {
 	t.Run("different dimensions", func(t *testing.T) {
 		// Even if the number of dimensions is the same, metrics with the same
 		// name must have the same dimensions.
-		_, err := scope.NewCounter(Spec{
+		_, err := scope.Counter(Spec{
 			Name:      "dimensions",
 			Help:      "help",
 			ConstTags: Tags{"bar": "baz"},
 		})
 		assert.NoError(t, err, "Failed to register new metric.")
-		_, err = scope.NewCounter(Spec{
+		_, err = scope.Counter(Spec{
 			Name:      "dimensions",
 			Help:      "help",
 			ConstTags: Tags{"bing": "quux"},
@@ -96,7 +96,7 @@ func TestScalarMetricDuplicates(t *testing.T) {
 		// change. This allows users to (inefficiently) create what are
 		// effectively vectors - a collection of metrics with the same name and
 		// tag names, but different tag values.
-		_, err := scope.NewCounter(Spec{
+		_, err := scope.Counter(Spec{
 			Name:      "dimensions",
 			Help:      "help",
 			ConstTags: Tags{"bar": "quux"},
@@ -106,12 +106,12 @@ func TestScalarMetricDuplicates(t *testing.T) {
 
 	t.Run("duplicate scrubbed name", func(t *testing.T) {
 		// Uniqueness is enforced after the metric name is scrubbed.
-		_, err := scope.NewCounter(Spec{
+		_, err := scope.Counter(Spec{
 			Name: "scrubbed_name",
 			Help: "help",
 		})
 		assert.NoError(t, err, "Failed to register new metric.")
-		_, err = scope.NewCounter(Spec{
+		_, err = scope.Counter(Spec{
 			Name: "scrubbed&name",
 			Help: "help",
 		})
@@ -120,13 +120,13 @@ func TestScalarMetricDuplicates(t *testing.T) {
 
 	t.Run("duplicate scrubbed dimensions", func(t *testing.T) {
 		// Uniqueness is enforced after tags are scrubbed.
-		_, err := scope.NewCounter(Spec{
+		_, err := scope.Counter(Spec{
 			Name:      "scrubbed_dimensions",
 			Help:      "help",
 			ConstTags: Tags{"b_r": "baz"},
 		})
 		assert.NoError(t, err, "Failed to register new metric.")
-		_, err = scope.NewCounter(Spec{
+		_, err = scope.Counter(Spec{
 			Name:      "scrubbed_dimensions",
 			Help:      "help",
 			ConstTags: Tags{"b&r": "baz"},
@@ -137,7 +137,7 @@ func TestScalarMetricDuplicates(t *testing.T) {
 	t.Run("constant tag name specified twice", func(t *testing.T) {
 		// Within a single user-supplied set of tags, scrubbing may not
 		// introduce duplicates.
-		_, err = scope.NewCounter(Spec{
+		_, err = scope.Counter(Spec{
 			Name:      "user_error_constant_tags",
 			Help:      "help",
 			ConstTags: Tags{"b_r": "baz", "b&r": "baz"},
@@ -153,20 +153,20 @@ func TestVectorMetricDuplicates(t *testing.T) {
 		Help:    "help",
 		VarTags: []string{"foo"},
 	}
-	_, err := scope.NewCounterVector(spec)
+	_, err := scope.CounterVector(spec)
 	assert.NoError(t, err, "Failed first registration.")
 
 	t.Run("same type", func(t *testing.T) {
 		// You can't reuse specs with the same metric type.
-		_, err := scope.NewCounterVector(spec)
+		_, err := scope.CounterVector(spec)
 		assert.Error(t, err, "Unexpected success re-using vector metrics metadata.")
 	})
 
 	t.Run("different type", func(t *testing.T) {
 		// Even if you change the metric type, you still can't re-use metadata.
-		_, err := scope.NewGaugeVector(spec)
+		_, err := scope.GaugeVector(spec)
 		assert.Error(t, err, "Unexpected success re-using vector metrics metadata.")
-		_, err = scope.NewHistogramVector(HistogramSpec{
+		_, err = scope.HistogramVector(HistogramSpec{
 			Spec:    spec,
 			Unit:    time.Nanosecond,
 			Buckets: []int64{1, 2},
@@ -177,14 +177,14 @@ func TestVectorMetricDuplicates(t *testing.T) {
 	t.Run("different type and mixed tags", func(t *testing.T) {
 		// If we change the type and make some constant tags variable, we still
 		// can't re-use metadata.
-		_, err := scope.NewCounterVector(Spec{
+		_, err := scope.CounterVector(Spec{
 			Name:      "test_different_type_mixed_tags",
 			Help:      "help",
 			ConstTags: Tags{"foo": "ok"},
 			VarTags:   []string{"bar"},
 		})
 		require.NoError(t, err, "Failed to create initial metric.")
-		_, err = scope.NewGaugeVector(Spec{
+		_, err = scope.GaugeVector(Spec{
 			Name:    "test_different_type_mixed_tags",
 			Help:    "help",
 			VarTags: []string{"foo", "bar"},
@@ -194,7 +194,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 
 	t.Run("different help", func(t *testing.T) {
 		// Changing the help string doesn't change the metric's identity.
-		_, err := scope.NewCounterVector(Spec{
+		_, err := scope.CounterVector(Spec{
 			Name:    "foo",
 			Help:    "different help",
 			VarTags: []string{"foo"},
@@ -204,14 +204,14 @@ func TestVectorMetricDuplicates(t *testing.T) {
 
 	t.Run("added dimensions", func(t *testing.T) {
 		// Can't have the same metric name with added dimensions.
-		_, err := scope.NewCounterVector(Spec{
+		_, err := scope.CounterVector(Spec{
 			Name:      "foo",
 			Help:      "help",
 			VarTags:   []string{"foo"},
 			ConstTags: Tags{"bar": "baz"},
 		})
 		assert.Error(t, err, "Shouldn't be able to add constant tags.")
-		_, err = scope.NewCounterVector(Spec{
+		_, err = scope.CounterVector(Spec{
 			Name:    "foo",
 			Help:    "help",
 			VarTags: []string{"foo", "bar"},
@@ -222,7 +222,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 	t.Run("different dimensions", func(t *testing.T) {
 		// Even if the number of dimensions is the same, metrics with the same
 		// name must have the same dimensions.
-		_, err := scope.NewCounterVector(Spec{
+		_, err := scope.CounterVector(Spec{
 			Name:    "foo",
 			Help:    "help",
 			VarTags: []string{"bar"},
@@ -234,14 +234,14 @@ func TestVectorMetricDuplicates(t *testing.T) {
 		// If a metric has the same name and dimensions, the tag values
 		// may change. (Again, this would be more efficiently modeled as a
 		// higher-dimensionality vector.)
-		_, err := scope.NewCounterVector(Spec{
+		_, err := scope.CounterVector(Spec{
 			Name:      "dimensions",
 			Help:      "help",
 			ConstTags: Tags{"bar": "baz"},
 			VarTags:   []string{"foo"},
 		})
 		assert.NoError(t, err)
-		_, err = scope.NewCounterVector(Spec{
+		_, err = scope.CounterVector(Spec{
 			Name:      "dimensions",
 			Help:      "help",
 			ConstTags: Tags{"bar": "quux"},
@@ -257,7 +257,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 		// carte scalars.
 
 		// dims: foo, baz
-		_, err := scope.NewCounterVector(Spec{
+		_, err := scope.CounterVector(Spec{
 			Name:      "ownership",
 			Help:      "help",
 			ConstTags: Tags{"foo": "bar"},
@@ -266,7 +266,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 		require.NoError(t, err)
 
 		// same dims
-		_, err = scope.NewCounter(Spec{
+		_, err = scope.Counter(Spec{
 			Name:      "ownership",
 			Help:      "help",
 			ConstTags: Tags{"foo": "bar", "baz": "quux"},
@@ -276,13 +276,13 @@ func TestVectorMetricDuplicates(t *testing.T) {
 
 	t.Run("duplicate scrubbed name", func(t *testing.T) {
 		// Uniqueness is enforced after the metric name is scrubbed.
-		_, err := scope.NewCounterVector(Spec{
+		_, err := scope.CounterVector(Spec{
 			Name:    "scrubbed_name",
 			Help:    "help",
 			VarTags: []string{"bar"},
 		})
 		assert.NoError(t, err, "Failed to register new metric.")
-		_, err = scope.NewCounterVector(Spec{
+		_, err = scope.CounterVector(Spec{
 			Name:    "scrubbed&name",
 			Help:    "help",
 			VarTags: []string{"bar"},
@@ -292,14 +292,14 @@ func TestVectorMetricDuplicates(t *testing.T) {
 
 	t.Run("duplicate scrubbed dimensions", func(t *testing.T) {
 		// Uniqueness is enforced after tags are scrubbed.
-		_, err := scope.NewCounterVector(Spec{
+		_, err := scope.CounterVector(Spec{
 			Name:      "scrubbed_dimensions",
 			Help:      "help",
 			ConstTags: Tags{"b_r": "baz"},
 			VarTags:   []string{"q__x"},
 		})
 		assert.NoError(t, err, "Failed to register new metric.")
-		_, err = scope.NewCounterVector(Spec{
+		_, err = scope.CounterVector(Spec{
 			Name:      "scrubbed_dimensions",
 			Help:      "help",
 			ConstTags: Tags{"b&r": "baz"},
@@ -311,7 +311,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 	t.Run("constant tag name specified twice", func(t *testing.T) {
 		// Within a single user-supplied set of constant tags, scrubbing may not
 		// introduce duplicates.
-		_, err = scope.NewCounterVector(Spec{
+		_, err = scope.CounterVector(Spec{
 			Name:      "user_error_constant_tags",
 			Help:      "help",
 			ConstTags: Tags{"b_r": "baz", "b&r": "baz"},
@@ -323,7 +323,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 	t.Run("variable tag name specified twice", func(t *testing.T) {
 		// Within a single user-supplied set of variable tags, scrubbing may not
 		// introduce duplicates.
-		_, err = scope.NewCounterVector(Spec{
+		_, err = scope.CounterVector(Spec{
 			Name:    "user_error_variable_tags",
 			Help:    "help",
 			VarTags: []string{"f__", "f&&"},
@@ -332,7 +332,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 	})
 
 	t.Run("constant and variable tag name overlap", func(t *testing.T) {
-		_, err = scope.NewCounterVector(Spec{
+		_, err = scope.CounterVector(Spec{
 			Name:      "user_error_tag_overlaps",
 			Help:      "help",
 			ConstTags: Tags{"foo": "one"},
@@ -345,7 +345,7 @@ func TestVectorMetricDuplicates(t *testing.T) {
 func TestTaggedPrecedence(t *testing.T) {
 	root := New()
 	scope := root.Scope().Tagged(Tags{"foo": "bar"}).Tagged(Tags{"foo": "baz"})
-	_, err := scope.NewCounter(Spec{
+	_, err := scope.Counter(Spec{
 		Name: "test_counter",
 		Help: "help",
 	})
@@ -365,7 +365,7 @@ func TestTaggedAutoScrubbing(t *testing.T) {
 		"tally":                   "invalid!value",
 		"valid":                   "ok",
 	})
-	vec, err := scope.NewCounterVector(Spec{
+	vec, err := scope.CounterVector(Spec{
 		Name:    "test_counter",
 		Help:    "help",
 		VarTags: []string{"invalid_var_name!"},
@@ -390,7 +390,7 @@ func TestTaggedAutoScrubbing(t *testing.T) {
 func TestTagScrubbingUniqueness(t *testing.T) {
 	t.Run("duplicate const names", func(t *testing.T) {
 		scope := New().Scope()
-		_, err := scope.NewCounter(Spec{
+		_, err := scope.Counter(Spec{
 			Name: "test",
 			Help: "help",
 			ConstTags: Tags{
@@ -402,7 +402,7 @@ func TestTagScrubbingUniqueness(t *testing.T) {
 	})
 	t.Run("duplicate variable names", func(t *testing.T) {
 		scope := New().Scope()
-		_, err := scope.NewCounterVector(Spec{
+		_, err := scope.CounterVector(Spec{
 			Name:    "test",
 			Help:    "help",
 			VarTags: []string{"foo_bar", "foo!bar"},

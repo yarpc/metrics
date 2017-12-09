@@ -41,7 +41,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Root {
 	root := New()
 	scope := root.Scope().Tagged(Tags{"service": "users"})
 
-	counter, err := scope.NewCounter(Spec{
+	counter, err := scope.Counter(Spec{
 		Name:        "test_counter",
 		Help:        "counter help",
 		ConstTags:   Tags{"foo": "counter"},
@@ -50,7 +50,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Root {
 	require.NoError(t, err, "Failed to create counter.")
 	counter.Inc()
 
-	counterVec, err := scope.NewCounterVector(Spec{
+	counterVec, err := scope.CounterVector(Spec{
 		Name:        "test_counter_vector",
 		Help:        "counter vector help",
 		ConstTags:   Tags{"foo": "counter_vector"},
@@ -67,7 +67,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Root {
 		"baz", "bazval2",
 	).Inc()
 
-	gauge, err := scope.NewGauge(Spec{
+	gauge, err := scope.Gauge(Spec{
 		Name:        "test_gauge",
 		Help:        "gauge help",
 		ConstTags:   Tags{"foo": "gauge"},
@@ -76,7 +76,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Root {
 	require.NoError(t, err, "Failed to create gauge.")
 	gauge.Store(42)
 
-	gaugeVec, err := scope.NewGaugeVector(Spec{
+	gaugeVec, err := scope.GaugeVector(Spec{
 		Name:        "test_gauge_vector",
 		Help:        "gauge vector help",
 		ConstTags:   Tags{"foo": "gauge_vector"},
@@ -93,7 +93,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Root {
 		"baz", "bazval2",
 	).Store(20)
 
-	hist, err := scope.NewHistogram(HistogramSpec{
+	hist, err := scope.Histogram(HistogramSpec{
 		Spec: Spec{
 			Name:        "test_histogram",
 			Help:        "histogram help",
@@ -106,7 +106,7 @@ func initializeMetrics(t testing.TB, disablePush bool) *Root {
 	require.NoError(t, err, "Failed to create histogram.")
 	hist.Observe(time.Millisecond)
 
-	histVec, err := scope.NewHistogramVector(HistogramSpec{
+	histVec, err := scope.HistogramVector(HistogramSpec{
 		Spec: Spec{
 			Name:        "test_histogram_vector",
 			Help:        "histogram vector help",

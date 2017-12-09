@@ -20,9 +20,9 @@
 
 package push // import "go.uber.org/net/metrics/push"
 
-// A Target bridges the net/metrics representations of counters, gauges, and
-// histograms with push-based telemetry systems. Targets are designed to work
-// with the metrics.Controller struct's Push method, so they don't need to be
+// A Target bridges the metrics package's representations of counters, gauges,
+// and histograms with push-based telemetry systems. Targets are designed to
+// work with the metrics.Root struct's Push method, so they don't need to be
 // safe for concurrent use.
 //
 // A concrete implementation of this interface that works with StatsD and M3

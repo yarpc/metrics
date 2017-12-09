@@ -32,7 +32,7 @@ func TestCounter(t *testing.T) {
 	s := root.Scope().Tagged(Tags{"service": "users"})
 
 	t.Run("duplicate constant tag names", func(t *testing.T) {
-		_, err := s.NewCounter(Spec{
+		_, err := s.Counter(Spec{
 			Name:      "test_counter",
 			Help:      "help",
 			ConstTags: Tags{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate tag names
@@ -41,7 +41,7 @@ func TestCounter(t *testing.T) {
 	})
 
 	t.Run("valid spec", func(t *testing.T) {
-		counter, err := s.NewCounter(Spec{
+		counter, err := s.Counter(Spec{
 			Name:      "test_counter",
 			Help:      "Some help.",
 			ConstTags: Tags{"foo": "bar"},
@@ -71,7 +71,7 @@ func TestCounterVector(t *testing.T) {
 			Help:    "Some help.",
 			VarTags: []string{"var"},
 		}
-		vec, err := root.Scope().NewCounterVector(spec)
+		vec, err := root.Scope().CounterVector(spec)
 		require.NoError(t, err, "Unexpected error constructing vector.")
 		return vec, root
 	}
@@ -124,7 +124,7 @@ func TestCounterVectorConstructionErrors(t *testing.T) {
 	s := New().Scope()
 
 	t.Run("duplicate constant tag names", func(t *testing.T) {
-		_, err := s.NewCounterVector(Spec{
+		_, err := s.CounterVector(Spec{
 			Name:      "test_counter",
 			Help:      "help",
 			ConstTags: Tags{"f_": "ok", "f&": "ok"}, // scrubbing introduces duplicate tag names
@@ -134,7 +134,7 @@ func TestCounterVectorConstructionErrors(t *testing.T) {
 	})
 
 	t.Run("duplicate variable tag names", func(t *testing.T) {
-		_, err := s.NewCounterVector(Spec{
+		_, err := s.CounterVector(Spec{
 			Name:    "test_counter",
 			Help:    "help",
 			VarTags: []string{"var", "var"},

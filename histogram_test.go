@@ -34,7 +34,7 @@ func TestHistogram(t *testing.T) {
 	s := root.Scope().Tagged(Tags{"service": "users"})
 
 	t.Run("duplicate constant tag names", func(t *testing.T) {
-		_, err := s.NewHistogram(HistogramSpec{
+		_, err := s.Histogram(HistogramSpec{
 			Spec: Spec{
 				Name:      "test_latency_ns",
 				Help:      "Some help.",
@@ -47,7 +47,7 @@ func TestHistogram(t *testing.T) {
 	})
 
 	t.Run("valid spec", func(t *testing.T) {
-		h, err := s.NewHistogram(HistogramSpec{
+		h, err := s.Histogram(HistogramSpec{
 			Spec: Spec{
 				Name:      "test_latency_ns",
 				Help:      "Some help.",
@@ -95,7 +95,7 @@ func TestHistogramVector(t *testing.T) {
 				Buckets: []int64{1000, 1000 * 60},
 			},
 			f: func(t testing.TB, s *Scope, spec HistogramSpec) {
-				vec, err := s.NewHistogramVector(spec)
+				vec, err := s.HistogramVector(spec)
 				require.NoError(t, err, "Unexpected error constructing vector.")
 				h, err := vec.Get("var", "x")
 				require.NoError(t, err, "Unexpected error getting a counter with correct number of tags.")
@@ -121,7 +121,7 @@ func TestHistogramVector(t *testing.T) {
 				Buckets: []int64{1000, 1000 * 60},
 			},
 			f: func(t testing.TB, s *Scope, spec HistogramSpec) {
-				vec, err := s.NewHistogramVector(spec)
+				vec, err := s.HistogramVector(spec)
 				require.NoError(t, err, "Unexpected error constructing vector.")
 				h, err := vec.Get("var", "x!")
 				require.NoError(t, err, "Unexpected error getting a counter with correct number of tags.")
@@ -147,7 +147,7 @@ func TestHistogramVector(t *testing.T) {
 				Buckets: []int64{1000, 1000 * 60},
 			},
 			f: func(t testing.TB, s *Scope, spec HistogramSpec) {
-				vec, err := s.NewHistogramVector(spec)
+				vec, err := s.HistogramVector(spec)
 				require.NoError(t, err, "Unexpected error constructing vector.")
 				_, err = vec.Get("var", "x", "var2", "y")
 				require.Error(t, err, "Unexpected success calling Get with incorrect number of tags.")
@@ -188,7 +188,7 @@ func TestHistogramVectorIndependence(t *testing.T) {
 		Unit:    time.Millisecond,
 		Buckets: []int64{1000},
 	}
-	vec, err := root.Scope().NewHistogramVector(spec)
+	vec, err := root.Scope().HistogramVector(spec)
 	require.NoError(t, err, "Unexpected error constructing vector.")
 
 	x, err := vec.Get("var", "x")
