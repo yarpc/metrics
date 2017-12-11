@@ -356,7 +356,7 @@ func TestHistogramSpecValidation(t *testing.T) {
 			if tt.scalarOK {
 				assertScalarHistogramSpecOK(t, tt.spec)
 			} else {
-				assertSimpleHistogramSpecFail(t, tt.spec)
+				assertScalarHistogramSpecFail(t, tt.spec)
 			}
 			if tt.vecOK {
 				assertVectorHistogramSpecOK(t, tt.spec)
@@ -401,20 +401,20 @@ func assertVectorSpecFail(t testing.TB, spec Spec) {
 
 func assertScalarHistogramSpecOK(t testing.TB, spec HistogramSpec) {
 	_, err := New().Scope().Histogram(spec)
-	assert.NoError(t, err, "Expected success from NewLatencies.")
+	assert.NoError(t, err, "Expected success from NewHistogram.")
 }
 
-func assertSimpleHistogramSpecFail(t testing.TB, spec HistogramSpec) {
+func assertScalarHistogramSpecFail(t testing.TB, spec HistogramSpec) {
 	_, err := New().Scope().Histogram(spec)
-	assert.Error(t, err, "Expected an error from NewLatencies.")
+	assert.Error(t, err, "Expected an error from NewHistogram.")
 }
 
 func assertVectorHistogramSpecOK(t testing.TB, spec HistogramSpec) {
 	_, err := New().Scope().HistogramVector(spec)
-	assert.NoError(t, err, "Expected success from NewLatenciesVector.")
+	assert.NoError(t, err, "Expected success from NewHistogramVector.")
 }
 
 func assertVectorHistogramSpecFail(t testing.TB, spec HistogramSpec) {
 	_, err := New().Scope().HistogramVector(spec)
-	assert.Error(t, err, "Expected an error from NewLatenciesVector.")
+	assert.Error(t, err, "Expected an error from NewHistogramVector.")
 }
