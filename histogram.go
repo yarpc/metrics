@@ -95,17 +95,18 @@ func newHistogram(m metadata, unit time.Duration, uppers []int64) *Histogram {
 
 // Observe finds the correct bucket for the supplied duration and increments
 // its counter. This is purely a convenience - it's equivalent to dividing the
-// duration by the histogram's unit and calling ObserveInt directly.
+// duration by the histogram's unit and calling IncBucket directly.
 func (h *Histogram) Observe(d time.Duration) {
 	if h == nil {
 		return
 	}
-	h.ObserveInt(int64(d / h.unit))
+	h.IncBucket(int64(d / h.unit))
 }
 
-// ObserveInt finds the correct bucket for the supplied integer and increments
-// its counter.
-func (h *Histogram) ObserveInt(n int64) {
+// IncBucket bypasses the time-based Observe API and increments a histogram
+// bucket directly. It finds the correct bucket for the supplied value and
+// adds one to its counter.
+func (h *Histogram) IncBucket(n int64) {
 	if h == nil {
 		return
 	}

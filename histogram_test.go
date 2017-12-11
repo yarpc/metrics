@@ -59,9 +59,9 @@ func TestHistogram(t *testing.T) {
 		require.NoError(t, err, "Unexpected construction error.")
 
 		h.Observe(-1)
-		h.ObserveInt(0)
+		h.IncBucket(0)
 		h.Observe(10)
-		h.ObserveInt(75)
+		h.IncBucket(75)
 		h.Observe(150)
 
 		snap := root.Snapshot()

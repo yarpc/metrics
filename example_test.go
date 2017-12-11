@@ -138,7 +138,8 @@ func ExampleHistogram() {
 	if err != nil {
 		panic(err)
 	}
-	h.Observe(37 * time.Millisecond)
+	h.Observe(37 * time.Millisecond) // increments bucket with upper bound 50
+	h.IncBucket(37)                  // also increments bucket with upper bound 50
 }
 
 func ExampleHistogramVector() {
