@@ -57,7 +57,7 @@ func (tp *target) NewHistogram(spec push.HistogramSpec) push.Histogram {
 			buckets[i] = float64(spec.Buckets[i])
 		}
 	}
-	return &latency{
+	return &histogram{
 		Histogram: tp.Tagged(spec.Tags).Histogram(
 			spec.Name,
 			tally.ValueBuckets(buckets),
@@ -86,7 +86,7 @@ func (tg *gauge) Set(value int64) {
 	tg.Update(float64(value))
 }
 
-type latency struct {
+type histogram struct {
 	tally.Histogram
 
 	// lasts keep the last value pushed to tally per histogram bucket.  This
@@ -94,11 +94,11 @@ type latency struct {
 	lasts map[int64]int64
 }
 
-func (tg *latency) Set(bucket int64, total int64) {
-	delta := total - tg.lasts[bucket]
-	tg.lasts[bucket] = total
+func (th *histogram) Set(bucket int64, total int64) {
+	delta := total - th.lasts[bucket]
+	th.lasts[bucket] = total
 
 	for i := int64(0); i < delta; i++ {
-		tg.RecordValue(float64(bucket))
+		th.RecordValue(float64(bucket))
 	}
 }
