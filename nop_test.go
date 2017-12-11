@@ -117,7 +117,7 @@ func assertNopGaugeVector(t testing.TB, vec *GaugeVector) {
 func assertNopHistogram(t testing.TB, h *Histogram) {
 	assert.NotPanics(t, func() {
 		h.Observe(time.Second)
-		h.ObserveInt(42)
+		h.IncBucket(42)
 	}, "Unexpected panic using no-op histgram.")
 }
 

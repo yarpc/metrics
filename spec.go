@@ -76,8 +76,9 @@ type HistogramSpec struct {
 	// exposed as 1000. Typically, the unit should also be part of the metric
 	// name.
 	Unit time.Duration
-	// Upper bounds (inclusive) for the histogram buckets. A catch-all bucket
-	// for large observations is automatically created, if necessary.
+	// Upper bounds (inclusive) for the histogram buckets in terms of the unit.
+	// A catch-all bucket for large observations is automatically created, if
+	// necessary.
 	Buckets []int64
 }
 
