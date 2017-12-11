@@ -71,7 +71,7 @@ type HistogramSpec struct {
 	Spec
 
 	// Durations are exposed as simple numbers, not strings or rich objects.
-	// Unit specifies the desired granularity for latency observations. For
+	// Unit specifies the desired granularity for histogram observations. For
 	// example, an observation of time.Second with a unit of time.Millisecond is
 	// exposed as 1000. Typically, the unit should also be part of the metric
 	// name.
@@ -82,20 +82,20 @@ type HistogramSpec struct {
 }
 
 func (hs HistogramSpec) validateScalar() error {
-	if err := hs.validateLatencies(); err != nil {
+	if err := hs.validateHistogram(); err != nil {
 		return err
 	}
 	return hs.Spec.validateScalar()
 }
 
 func (hs HistogramSpec) validateVector() error {
-	if err := hs.validateLatencies(); err != nil {
+	if err := hs.validateHistogram(); err != nil {
 		return err
 	}
 	return hs.Spec.validateVector()
 }
 
-func (hs HistogramSpec) validateLatencies() error {
+func (hs HistogramSpec) validateHistogram() error {
 	if hs.Unit < 1 {
 		return fmt.Errorf("duration unit must be positive, got %v", hs.Unit)
 	}
