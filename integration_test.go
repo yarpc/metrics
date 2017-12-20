@@ -23,9 +23,6 @@ package metrics_test
 import (
 	"io/ioutil"
 	"math"
-	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -217,32 +214,6 @@ func TestTallyEndToEnd(t *testing.T) {
 			"Wrong value for second vectorized histogram.",
 		)
 	})
-}
-
-// scrape collects and returns the plain-text content of a GET on the supplied
-// handler, along with the response code.
-func scrape(t testing.TB, handler http.Handler) (int, string) {
-	server := httptest.NewServer(handler)
-	defer server.Close()
-
-	resp, err := http.Get(server.URL)
-	require.NoError(t, err, "Unexpected error scraping Prometheus endpoint.")
-	body, err := ioutil.ReadAll(resp.Body)
-	require.NoError(t, err, "Unexpected error reading response body.")
-	return resp.StatusCode, strings.TrimSpace(string(body))
-}
-
-// assertPrometheus asserts that the root's scrape endpoint successfully
-// serves the supplied plain-text Prometheus metrics.
-func assertPrometheus(t testing.TB, root *Root, expected string) {
-	code, actual := scrape(t, root)
-	assert.Equal(t, http.StatusOK, code, "Unexpected HTTP response code from Prometheus scrape.")
-	assert.Equal(
-		t,
-		strings.Split(expected, "\n"),
-		strings.Split(actual, "\n"),
-		"Unexpected Prometheus text.",
-	)
 }
 
 func TestPrometheusEndToEnd(t *testing.T) {
