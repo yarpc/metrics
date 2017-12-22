@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// Package tallypush integrates go.uber.org/net/metrics with push-based StatsD
+// and M3 systems.
 package tallypush // import "go.uber.org/net/metrics/tallypush"
 
 import (
@@ -28,8 +30,8 @@ import (
 )
 
 // New creates a push.Target that integrates with the Tally metrics package.
-// Tally supports pushing to StatsD-based systems, M3, or both - see the Tally
-// documentation for details.
+// Tally supports pushing to StatsD-based systems, M3, or both. See the Tally
+// documentation for details: https://godoc.org/github.com/uber-go/tally.
 func New(scope tally.Scope) push.Target {
 	return &target{scope}
 }

@@ -25,7 +25,7 @@
 //
 // Metric Names and Uniqueness
 //
-// Like Prometheus, but unlike Tally, metric names must be relatively long and
+// Like Prometheus, but unlike Tally, metric names should be relatively long and
 // descriptive - generally speaking, metrics from the same process shouldn't
 // share names. (See the documentation for the Root struct below for a longer
 // explanation of the uniqueness rules.) For example, prefer
@@ -76,4 +76,11 @@
 // supports Prometheus's text and protocol buffer exposition formats. Examples
 // of both push and pull integration are included in the documentation for the
 // root struct's Push and ServeHTTP methods.
+//
+// See Also
+//
+// If you're unfamiliar with Tally and Prometheus, you may want to consult
+// their documentation:
+//   https://godoc.org/github.com/uber-go/tally
+//   https://godoc.org/github.com/prometheus/client_golang/prometheus
 package metrics // import "go.uber.org/net/metrics"

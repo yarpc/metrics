@@ -18,6 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// Package push integrates go.uber.org/net/metrics with push-based telemetry
+// systems like Graphite and M3. To integrate with such a system, implement
+// the Target interface and use the Push method on metrics.Root.
+//
+// See the go.uber.org/net/metrics/tallypush package for an example
+// integration with both StatsD- and M3-based systems.
 package push // import "go.uber.org/net/metrics/push"
 
 // A Target bridges the metrics package's representations of counters, gauges,
