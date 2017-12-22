@@ -33,7 +33,7 @@ type Spec struct {
 	Help        string   // required: displayed on HTTP pages
 	ConstTags   Tags     // optional: constant tags
 	VarTags     []string // variable tags, required for vectors and forbidden otherwise
-	DisablePush bool     // reduces load on system we're pushing to (if only)
+	DisablePush bool     // reduces load on system we're pushing to (if any)
 }
 
 func (s Spec) validate() error {
