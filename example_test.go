@@ -34,12 +34,20 @@ import (
 )
 
 func Example() {
+	// First, construct a metrics root. Generally, there's only one root in each
+	// process.
 	root := metrics.New()
+	// From the root, access the top-level scope and add some tags to create a
+	// sub-scope. You'll typically pass scopes around your application, since
+	// they let you create individual metrics.
 	scope := root.Scope().Tagged(metrics.Tags{
 		"host":   "db01",
 		"region": "us-west",
 	})
 
+	// Create a simple counter. Note that the name is fairly long; if this code
+	// were part of a reusable library called "foo", "foo_selects_completed"
+	// would be a much better name.
 	total, err := scope.Counter(metrics.Spec{
 		Name: "selects_completed",
 		Help: "Total number of completed SELECT queries.",
@@ -48,16 +56,32 @@ func Example() {
 		panic(err)
 	}
 
+	// See the package-level documentation for a general discussion of vectors.
+	// In this case, we're going to track the number of in-progress SELECT
+	// queries by table and user. Since we won't know the table and user names
+	// until we actually receive each query, we model this as a vector with two
+	// variable tags.
 	progress, err := scope.GaugeVector(metrics.Spec{
 		Name:    "selects_in_progress",
 		Help:    "Number of in-progress SELECT queries.",
-		VarTags: []string{"table"},
+		VarTags: []string{"table", "user"},
 	})
 	if err != nil {
 		panic(err)
 	}
-	trips := progress.MustGet("table" /* tag name */, "trips" /* tag value */)
-	drivers := progress.MustGet("table", "drivers")
+	// MustGet retrieves the gauge with the specified variable tags, creating
+	// one if necessary. We must supply both the variable tag names and values,
+	// and they must be in the correct order. MustGet panics only if the tags
+	// are malformed. If you'd rather check errors explicitly, there's also a
+	// Get method.
+	trips := progress.MustGet(
+		"table" /* tag name */, "trips", /* tag value */
+		"user" /* tag name */, "jane", /* tag value */
+	)
+	drivers := progress.MustGet(
+		"table", "drivers",
+		"user", "chen",
+	)
 
 	fmt.Println("Trips:", trips.Inc())
 	total.Inc()

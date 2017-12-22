@@ -29,11 +29,11 @@ import (
 
 // A Spec configures Counters, Gauges, CounterVectors, and GaugeVectors.
 type Spec struct {
-	Name        string   // required
-	Help        string   // required
-	ConstTags   Tags     // constant tags
-	VarTags     []string // variable tags, only meaningful for vectors
-	DisablePush bool
+	Name        string   // required: metric name, should be fairly long and descriptive
+	Help        string   // required: displayed on HTTP pages
+	ConstTags   Tags     // optional: constant tags
+	VarTags     []string // variable tags, required for vectors and forbidden otherwise
+	DisablePush bool     // reduces load on system we're pushing to (if any)
 }
 
 func (s Spec) validate() error {

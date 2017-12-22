@@ -75,7 +75,14 @@ func (r *Root) Scope() *Scope {
 	return r.scope
 }
 
-// ServeHTTP implements http.Handler.
+// ServeHTTP implements a Prometheus-compatible http.Handler that exposes the
+// current value of all the metrics created with this Root (including all
+// tagged sub-scopes). Like the HTTP handler included in the Prometheus
+// client, it uses content-type negotiation to determine whether to use a
+// text or protocol buffer encoding.
+//
+// In particular, it's compatible with the standard Prometheus server's
+// scraping logic.
 func (r *Root) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.handler.ServeHTTP(w, req)
 }
