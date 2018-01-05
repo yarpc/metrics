@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.0-dev (unreleased)
+
+- No changes yet.
+
 ## v1.0.1 (2018-01-04)
 
 - Updated Version constant.
