@@ -2,7 +2,7 @@
 
 ## v1.0.1-dev (unreleased)
 
-- No changes yet.
+- Updated Version constant
 
 ## v1.0.0 (2017-12-22)
 
