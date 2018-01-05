@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.1-dev (unreleased)
+
+- Updated Version constant
+
 ## v1.0.0 (2017-12-22)
 
 - No changes.
