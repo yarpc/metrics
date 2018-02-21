@@ -349,6 +349,22 @@ func TestHistogramSpecValidation(t *testing.T) {
 			scalarOK: false,
 			vecOK:    false,
 		},
+		{
+			desc: "valid everything, invalid histogram type",
+			spec: HistogramSpec{
+				Spec: Spec{
+					Name:      "foo",
+					Help:      "Some help.",
+					ConstTags: Tags{"foo": "bar"},
+					VarTags:   []string{"baz"},
+				},
+				Unit:    time.Millisecond,
+				Buckets: []int64{60, 1000},
+				Type:    HistogramType(123),
+			},
+			scalarOK: false,
+			vecOK:    false,
+		},
 	}
 
 	for _, tt := range tests {

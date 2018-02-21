@@ -24,6 +24,7 @@ package tallypush // import "go.uber.org/net/metrics/tallypush"
 
 import (
 	"math"
+	"time"
 
 	"github.com/uber-go/tally"
 	"go.uber.org/net/metrics/push"
@@ -51,21 +52,44 @@ func (tp *target) NewGauge(spec push.Spec) push.Gauge {
 }
 
 func (tp *target) NewHistogram(spec push.HistogramSpec) push.Histogram {
-	buckets := make([]float64, len(spec.Buckets))
-	for i := range spec.Buckets {
-		if spec.Buckets[i] == math.MaxInt64 {
-			buckets[i] = math.MaxFloat64
-		} else {
-			buckets[i] = float64(spec.Buckets[i])
-		}
+	var buckets tally.Buckets
+	if spec.Type == push.Duration {
+		buckets = getDurationBuckets(spec.Buckets)
+	} else {
+		buckets = getValueBuckets(spec.Buckets) // This might normalize duration to "seconds" for all inputs, investigate.
 	}
 	return &histogram{
 		Histogram: tp.Tagged(spec.Tags).Histogram(
 			spec.Name,
-			tally.ValueBuckets(buckets),
+			buckets,
 		),
-		lasts: make(map[int64]int64, len(spec.Buckets)),
+		lasts:         make(map[int64]int64, len(spec.Buckets)),
+		histogramType: spec.Type,
 	}
+}
+
+func getValueBuckets(buckets []int64) tally.Buckets {
+	valueBuckets := make([]float64, len(buckets))
+	for i := range buckets {
+		if buckets[i] == math.MaxInt64 {
+			valueBuckets[i] = math.MaxFloat64
+		} else {
+			valueBuckets[i] = float64(buckets[i])
+		}
+	}
+	return tally.ValueBuckets(valueBuckets)
+}
+
+func getDurationBuckets(buckets []int64) tally.Buckets {
+	durationBuckets := make([]time.Duration, len(buckets))
+	for i := range buckets {
+		if buckets[i] == math.MaxInt64 {
+			durationBuckets[i] = time.Duration(math.MaxInt64)
+		} else {
+			durationBuckets[i] = time.Duration(buckets[i])
+		}
+	}
+	return tally.DurationBuckets(durationBuckets)
 }
 
 type counter struct {
@@ -94,6 +118,8 @@ type histogram struct {
 	// lasts keep the last value pushed to tally per histogram bucket.  This
 	// defaults to zero.
 	lasts map[int64]int64
+
+	histogramType push.HistogramType
 }
 
 func (th *histogram) Set(bucket int64, total int64) {
@@ -101,6 +127,10 @@ func (th *histogram) Set(bucket int64, total int64) {
 	th.lasts[bucket] = total
 
 	for i := int64(0); i < delta; i++ {
-		th.RecordValue(float64(bucket))
+		if th.histogramType == push.Duration {
+			th.RecordDuration(time.Duration(bucket))
+		} else {
+			th.RecordValue(float64(bucket))
+		}
 	}
 }

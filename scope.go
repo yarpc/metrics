@@ -103,7 +103,7 @@ func (s *Scope) Histogram(spec HistogramSpec) (*Histogram, error) {
 	if err != nil {
 		return nil, err
 	}
-	h := newHistogram(meta, spec.Unit, spec.Buckets)
+	h := newHistogram(meta, spec.Unit, spec.Buckets, spec.Type)
 	if err := s.core.register(h); err != nil {
 		return nil, err
 	}
