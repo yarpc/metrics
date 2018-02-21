@@ -66,6 +66,17 @@ func (s Spec) validateVector() error {
 	return nil
 }
 
+// HistogramType is a hint for the representation of the histogram when being
+// pushed or viewed.
+type HistogramType int
+
+const (
+	// Value types are float value recorded histograms.
+	Value HistogramType = iota
+	// Duration types are time based histograms.
+	Duration
+)
+
 // A HistogramSpec configures Histograms and HistogramVectors.
 type HistogramSpec struct {
 	Spec
@@ -80,6 +91,9 @@ type HistogramSpec struct {
 	// A catch-all bucket for large observations is automatically created, if
 	// necessary.
 	Buckets []int64
+	// Represents the types of values that are being recorded on this histogram.
+	// Defaults to "Value"
+	Type HistogramType
 }
 
 func (hs HistogramSpec) validateScalar() error {
@@ -97,6 +111,9 @@ func (hs HistogramSpec) validateVector() error {
 }
 
 func (hs HistogramSpec) validateHistogram() error {
+	if int(hs.Type) > 1 || int(hs.Type) < 0 {
+		return fmt.Errorf("histogram type must be one of value or duration, got: %v", hs.Type)
+	}
 	if hs.Unit < 1 {
 		return fmt.Errorf("duration unit must be positive, got %v", hs.Unit)
 	}

@@ -23,6 +23,7 @@ package tallypush
 import (
 	"math"
 	"testing"
+	"time"
 
 	"go.uber.org/net/metrics"
 	"go.uber.org/net/metrics/push"
@@ -64,12 +65,13 @@ func TestGauge(t *testing.T) {
 	assert.Equal(t, 20.0, gauges["test_gauge+foo=bar"].Value(), "Unexpected exported value.")
 }
 
-func TestHistogram(t *testing.T) {
+func TestValueHistogram(t *testing.T) {
 	scope := newScope()
 	target := New(scope)
 	h := target.NewHistogram(push.HistogramSpec{
 		Spec:    push.Spec{Name: "test_histogram", Tags: metrics.Tags{"foo": "bar"}},
 		Buckets: []int64{5, 10, math.MaxInt64},
+		Type:    push.Value,
 	})
 	h.Set(5, 1)
 	h.Set(5, 2) // should overwrite previous value
@@ -79,5 +81,32 @@ func TestHistogram(t *testing.T) {
 		t,
 		map[float64]int64{5: 2, 10: 0, math.MaxFloat64: 0},
 		histograms["test_histogram+foo=bar"].Values(),
+	)
+	assert.Nil(
+		t,
+		histograms["test_histogram+foo=bar"].Durations(),
+	)
+}
+
+func TestDurationHistogram(t *testing.T) {
+	scope := newScope()
+	target := New(scope)
+	h := target.NewHistogram(push.HistogramSpec{
+		Spec:    push.Spec{Name: "test_histogram", Tags: metrics.Tags{"foo": "bar"}},
+		Buckets: []int64{5, 10, math.MaxInt64},
+		Type:    push.Duration,
+	})
+	h.Set(5, 1)
+	h.Set(5, 2) // should overwrite previous value
+	histograms := scope.Snapshot().Histograms()
+	require.Equal(t, 1, len(histograms), "Unexpected number of histograms.")
+	assert.Nil(
+		t,
+		histograms["test_histogram+foo=bar"].Values(),
+	)
+	assert.Equal(
+		t,
+		map[time.Duration]int64{time.Duration(5): 2, time.Duration(10): 0, time.Duration(math.MaxInt64): 0},
+		histograms["test_histogram+foo=bar"].Durations(),
 	)
 }

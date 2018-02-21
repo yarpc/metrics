@@ -45,11 +45,24 @@ type Spec struct {
 	Tags map[string]string
 }
 
+// HistogramType is a hint for the representation of the histogram when being
+// pushed or viewed.
+type HistogramType int
+
+const (
+	// Value types are float value recorded histograms.
+	Value HistogramType = iota
+	// Duration types are time based histograms.
+	Duration
+)
+
 // A HistogramSpec configures histograms.
 type HistogramSpec struct {
 	Spec
 
 	Buckets []int64 // upper bounds, inclusive
+
+	Type HistogramType
 }
 
 // A Counter models monotonically increasing values, like a car's odometer.

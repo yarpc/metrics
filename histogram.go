@@ -79,15 +79,17 @@ type Histogram struct {
 	bounds   []int64
 	buckets  buckets
 	sum      atomic.Int64 // required by Prometheus
+	hType    HistogramType
 	pusher   push.Histogram
 	tagPairs []*promproto.LabelPair
 }
 
-func newHistogram(m metadata, unit time.Duration, uppers []int64) *Histogram {
+func newHistogram(m metadata, unit time.Duration, uppers []int64, hType HistogramType) *Histogram {
 	return &Histogram{
 		buckets:  newBuckets(uppers),
 		meta:     m,
 		unit:     unit,
+		hType:    hType,
 		bounds:   uppers,
 		tagPairs: m.MergeTags(nil /* variable tag vals */),
 	}
@@ -186,6 +188,7 @@ func (h *Histogram) push(target push.Target) {
 				Tags: zip(h.tagPairs),
 			},
 			Buckets: h.bounds,
+			Type:    push.HistogramType(h.hType),
 		})
 	}
 	for _, bucket := range h.buckets {
