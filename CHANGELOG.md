@@ -1,8 +1,8 @@
 # Changelog
 
-## v1.1.0-dev (unreleased)
+## v1.1.0
 
-- No changes yet.
+- Update pinned version of Prometheus.
 
 ## v1.0.1 (2018-01-04)
 
