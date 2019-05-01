@@ -6,7 +6,7 @@ Fast, Prometheus- and Graphite-compatible metrics.
 
 [doc-img]: https://godoc.org/go.uber.org/net/metrics?status.svg
 [doc]: https://godoc.org/go.uber.org/net/metrics
-[ci-img]: https://travis-ci.org/yarpc/metrics.svg?branch=master
-[ci]: https://travis-ci.org/yarpc/metrics
+[ci-img]: https://travis-ci.com/yarpc/metrics.svg?branch=master
+[ci]: https://travis-ci.com/yarpc/metrics
 [cov-img]: https://codecov.io/gh/yarpc/metrics/branch/master/graph/badge.svg
 [cov]: https://codecov.io/gh/yarpc/metrics
