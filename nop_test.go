@@ -76,6 +76,7 @@ func TestNopScope(t *testing.T) {
 	assertNopHistogram(t, h)
 
 	hv, err := s.HistogramVector(HistogramSpec{})
+	assert.NoError(t, err, "Error calling HistogramVector on nil scope.")
 	assertNopHistogramVector(t, hv)
 }
 

@@ -1,6 +1,7 @@
 export GOBIN ?= $(shell pwd)/bin
 
 GOLINT = $(GOBIN)/golint
+STATICCHECK = $(GOBIN)/staticcheck
 
 GO_FILES := $(shell \
 	find . '(' -path '*/.*' -o -path './vendor' ')' -prune \
@@ -11,6 +12,9 @@ all: lint test
 
 $(GOLINT):
 	go install golang.org/x/lint/golint
+
+$(STATICCHECK):
+	go install honnef.co/go/tools/cmd/staticcheck
 
 .PHONY: dependencies
 dependencies:
@@ -25,6 +29,8 @@ lint: $(GOLINT) $(STATICCHECK)
 	@go vet ./... 2>&1 | grep -v '^#' |  tee -a lint.log
 	@echo "Checking golint"
 	@$(GOLINT) ./... 2>&1 | tee -a lint.log
+	@echo "Checking staticcheck"
+	@$(STATICCHECK) ./... 2>&1 |  tee -a lint.log
 	@echo "Checking for license headers"
 	@scripts/check_license.sh | tee -a lint.log
 	@[ ! -s lint.log ]
