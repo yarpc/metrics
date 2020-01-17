@@ -9,3 +9,6 @@
 *.pprof
 .glide/
 vendor/
+/bin
+lint.log
+cover.html

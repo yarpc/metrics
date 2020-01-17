@@ -1,18 +1,24 @@
 language: go
 sudo: false
-go:
-  - 1.8
-  - 1.9
 go_import_path: go.uber.org/net/metrics
-cache:
-  directories:
-    - vendor
+
+env:
+  global:
+    - GO111MODULE=on
+
+matrix:
+  include:
+    - go: "1.12"
+    - go: "1.13"
+      env: LINT=1
+
 install:
-  - make dependencies
+  - go mod download
+
 script:
-  - make lint
+  - test -z "$LINT" || make lint
   - make test
-  - make bench
+
 after_success:
   - make cover
   - bash <(curl -s https://codecov.io/bash)
