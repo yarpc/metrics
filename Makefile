@@ -47,10 +47,10 @@ cover:
 
 .PHONY: verifyversion
 verifyversion:
-	$(eval CHANGELOG_VERSION := $(shell perl -ne '/^## (\S+)/ && print "v$$1\n"' CHANGELOG.md | head -n1))
+	$(eval CHANGELOG_VERSION := $(shell perl -ne '/^## (\S+)/ && print "$$1\n"' CHANGELOG.md | head -n1))
 	$(eval INTHECODE_VERSION := $(shell perl -ne '/^const Version.*"([^"]+)".*$$/ && print "v$$1\n"' version.go))
 	@if [ "$(INTHECODE_VERSION)" = "$(CHANGELOG_VERSION)" ]; then \
-		echo "net/metrics"; \
+		echo "net/metrics: $(CHANGELOG_VERSION)"; \
 	elif [ "$(CHANGELOG_VERSION)" = "vUnreleased" ]; then \
 		echo "net/metrics (development): $(INTHECODE_VERSION)"; \
 	else \
