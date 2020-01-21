@@ -7,11 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 - Migrate to Go modules.
 
-## v1.2.0
+## v1.2.0 (2019-09-26)
 ### Changed
 - Support Prometheus client 1.X.
 
-## v1.1.0
+## v1.1.0 (2019-03-22)
 ### Changed
 - Update pinned version of Prometheus.
 
