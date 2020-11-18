@@ -152,14 +152,15 @@ func (h *Histogram) metric() *promproto.Metric {
 	n := uint64(0)
 	promBuckets := make([]*promproto.Bucket, 0, len(h.buckets)-1)
 	for _, b := range h.buckets {
-		n += uint64(b.Load())
+		v := uint64(b.Load())
+		n += v
 		if b.upper == math.MaxInt64 {
 			// Prometheus doesn't want us to export the final catch-all bucket.
 			continue
 		}
 		upper := float64(b.upper)
 		promBuckets = append(promBuckets, &promproto.Bucket{
-			CumulativeCount: &n,
+			CumulativeCount: &v,
 			UpperBound:      &upper,
 		})
 	}
