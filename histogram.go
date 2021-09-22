@@ -157,9 +157,10 @@ func (h *Histogram) metric() *promproto.Metric {
 			// Prometheus doesn't want us to export the final catch-all bucket.
 			continue
 		}
+		cumulativeCount := n
 		upper := float64(b.upper)
 		promBuckets = append(promBuckets, &promproto.Bucket{
-			CumulativeCount: &n,
+			CumulativeCount: &cumulativeCount,
 			UpperBound:      &upper,
 		})
 	}
