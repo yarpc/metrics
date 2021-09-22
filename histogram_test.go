@@ -25,9 +25,18 @@ import (
 	"testing"
 	"time"
 
+	promproto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func uint64ptr(i uint64) *uint64 {
+	return &i
+}
+
+func float64ptr(i float64) *float64 {
+	return &i
+}
 
 func TestHistogram(t *testing.T) {
 	root := New()
@@ -73,6 +82,42 @@ func TestHistogram(t *testing.T) {
 			Tags:   Tags{"foo": "bar", "service": "users"},
 			Values: []int64{10, 10, 10, 100, math.MaxInt64},
 		}, got, "Unexpected histogram snapshot.")
+	})
+
+	t.Run("prometheus export", func(t *testing.T) {
+		h, err := s.Histogram(HistogramSpec{
+			Spec: Spec{
+				Name: "test_histogram",
+				Help: "Some help.",
+			},
+			Unit:    time.Nanosecond,
+			Buckets: []int64{10, 50, 100},
+		})
+		require.NoError(t, err, "Unexpected construction error.")
+
+		h.IncBucket(5)
+		h.IncBucket(45)
+		h.IncBucket(90)
+
+		expectedHistogram := &promproto.Histogram{
+			SampleCount: uint64ptr(3),
+			SampleSum:   float64ptr(140),
+			Bucket: []*promproto.Bucket{
+				{
+					CumulativeCount: uint64ptr(1),
+					UpperBound:      float64ptr(10),
+				},
+				{
+					CumulativeCount: uint64ptr(2),
+					UpperBound:      float64ptr(50),
+				},
+				{
+					CumulativeCount: uint64ptr(3),
+					UpperBound:      float64ptr(100),
+				},
+			},
+		}
+		assert.Equal(t, expectedHistogram, h.metric().Histogram)
 	})
 }
 
