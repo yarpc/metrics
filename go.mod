@@ -12,7 +12,7 @@ require (
 	github.com/uber-go/tally v3.3.12+incompatible
 	go.uber.org/atomic v1.5.1
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
-	golang.org/x/sys v0.0.0-20200117145432-59e60aa80a0c // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/tools v0.0.0-20200117215004-fe56e6335763 // indirect
 	honnef.co/go/tools v0.0.1-2019.2.3
 )
