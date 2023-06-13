@@ -77,4 +77,5 @@ type Gauge interface {
 // Implementations do not need to be safe for concurrent use.
 type Histogram interface {
 	Set(bucket int64, total int64)
+	SetIndex(bucketIndex int, bucket int64, total int64)
 }

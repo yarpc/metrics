@@ -24,6 +24,7 @@ package tallypush // import "go.uber.org/net/metrics/tallypush"
 
 import (
 	"math"
+	"sort"
 
 	"github.com/uber-go/tally"
 	"go.uber.org/net/metrics/push"
@@ -64,7 +65,8 @@ func (tp *target) NewHistogram(spec push.HistogramSpec) push.Histogram {
 			spec.Name,
 			tally.ValueBuckets(buckets),
 		),
-		lasts: make(map[int64]int64, len(spec.Buckets)),
+		lasts:       make([]int64, len(buckets)),
+		bucketValue: spec.Buckets,
 	}
 }
 
@@ -91,16 +93,53 @@ func (tg *gauge) Set(value int64) {
 type histogram struct {
 	tally.Histogram
 
-	// lasts keep the last value pushed to tally per histogram bucket.  This
-	// defaults to zero.
-	lasts map[int64]int64
+	// lasts keeps the last value pushed to tally
+	lasts []int64
+	// bucketValue keeps the static bucket value to be able to report correctly
+	bucketValue []int64
 }
 
+// Set is log(n) because it performs binary search to find the index that bucket belongs to. Although, if the user
+// didn't populate the HistogramSpec correctly, the first time it would incur additional cost of O(n) to insert the
+// new bucket elements
 func (th *histogram) Set(bucket int64, total int64) {
-	delta := total - th.lasts[bucket]
-	th.lasts[bucket] = total
+	index := sort.Search(len(th.lasts), func(i int) bool {
+		return th.bucketValue[i] >= bucket
+	})
+
+	th.ensureBucket(index, bucket, false)
+	th.recordValue(index, bucket, total)
+}
+
+// ensureBucket makes sure that the bucket at index is the same as the bucket from the user parameters.
+// For the new API (SetIndex) we disable insertions because there is always going to be a mismatch.
+func (th *histogram) ensureBucket(index int, bucket int64, panicOnError bool) {
+	switch {
+	case index >= len(th.bucketValue):
+		th.bucketValue = append(th.bucketValue, bucket)
+		th.lasts = append(th.lasts, 0)
+	case bucket != th.bucketValue[index]:
+		// Only the new API allows panics, we do this to ensure they are using it correctly
+		if panicOnError {
+			panic("insertion is not supported")
+		}
+		th.lasts = append(th.lasts[:index], append([]int64{0}, th.lasts[index:]...)...)
+		th.bucketValue = append(th.bucketValue[:index], append([]int64{bucket}, th.bucketValue[index:]...)...)
+	}
+}
+
+func (th *histogram) recordValue(index int, bucket int64, total int64) {
+	delta := total - th.lasts[index]
+	th.lasts[index] = total
 
 	for i := int64(0); i < delta; i++ {
 		th.RecordValue(float64(bucket))
 	}
+}
+
+// SetIndex is O(1) because it can access the index directly. It allows to add missing buckets at the end, but in the
+// middle will panic.
+func (th *histogram) SetIndex(bucketIndex int, bucket int64, total int64) {
+	th.ensureBucket(bucketIndex, bucket, true)
+	th.recordValue(bucketIndex, bucket, total)
 }
