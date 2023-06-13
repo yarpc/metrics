@@ -124,9 +124,10 @@ type CounterVector struct {
 
 func newCounterVector(m metadata) *CounterVector {
 	return &CounterVector{vector{
-		meta:    m,
-		factory: newDynamicCounter,
-		metrics: make(map[string]metric, _defaultCollectionSize),
+		meta:           m,
+		factory:        newDynamicCounter,
+		metrics:        make(map[string]uint32, _defaultCollectionSize),
+		metricsStorage: make([]metric, 0, _defaultCollectionSize),
 	}}
 }
 
@@ -171,7 +172,7 @@ func (cv *CounterVector) proto() *promproto.MetricFamily {
 	}
 	cv.metricsMu.RLock()
 	protos := make([]*promproto.Metric, 0, len(cv.metrics))
-	for _, metric := range cv.metrics {
+	for _, metric := range cv.metricsStorage {
 		protos = append(protos, metric.(*Counter).metric())
 	}
 	cv.metricsMu.RUnlock()
