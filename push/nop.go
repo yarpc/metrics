@@ -32,4 +32,6 @@ func (n *nop) Set(int64)                            {}
 
 type nopHistogram struct{}
 
+func (h *nopHistogram) SetIndex(int, int64, int64) {}
+
 func (h *nopHistogram) Set(int64, int64) {}

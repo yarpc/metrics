@@ -189,8 +189,8 @@ func (h *Histogram) push(target push.Target) {
 			Buckets: h.bounds,
 		})
 	}
-	for _, bucket := range h.buckets {
-		h.pusher.Set(bucket.upper, bucket.Load())
+	for index, bucket := range h.buckets {
+		h.pusher.SetIndex(index, bucket.upper, bucket.Load())
 	}
 }
 

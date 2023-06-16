@@ -28,6 +28,9 @@ import (
 	promproto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uber-go/tally"
+	bucketpkg "go.uber.org/net/metrics/bucket"
+	"go.uber.org/net/metrics/tallypush"
 )
 
 func uint64ptr(i uint64) *uint64 {
@@ -260,4 +263,17 @@ func TestHistogramVectorIndependence(t *testing.T) {
 		Unit:   time.Millisecond,
 		Values: []int64{1000},
 	}, snap.Histograms[1], "Unexpected second histogram snapshot.")
+}
+
+func BenchmarkHistogram(b *testing.B) {
+	pusher := tallypush.New(tally.NoopScope)
+	name := ""
+	hist := newHistogram(metadata{
+		Name: &name,
+	}, time.Millisecond, bucketpkg.NewRPCLatency())
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		hist.push(pusher)
+	}
 }
