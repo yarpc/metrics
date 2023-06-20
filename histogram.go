@@ -206,16 +206,18 @@ type HistogramVector struct {
 	unit   time.Duration
 	bounds []int64
 
-	histogramsMu sync.RWMutex
-	histograms   map[string]*Histogram // key is variable tag vals
+	histogramsMu     sync.RWMutex
+	histograms       map[string]uint32 // key is variable tag vals
+	histogramStorage []*Histogram
 }
 
 func newHistogramVector(m metadata, unit time.Duration, uppers []int64) *HistogramVector {
 	return &HistogramVector{
-		meta:       m,
-		unit:       unit,
-		bounds:     uppers,
-		histograms: make(map[string]*Histogram, _defaultCollectionSize),
+		meta:             m,
+		unit:             unit,
+		bounds:           uppers,
+		histograms:       make(map[string]uint32, _defaultCollectionSize),
+		histogramStorage: make([]*Histogram, 0, _defaultCollectionSize),
 	}
 }
 
@@ -237,12 +239,14 @@ func (hv *HistogramVector) Get(variableTagPairs ...string) (*Histogram, error) {
 	}
 
 	hv.histogramsMu.RLock()
-	h, ok := hv.histograms[string(digester.digest())]
-	hv.histogramsMu.RUnlock()
+	hIndex, ok := hv.histograms[string(digester.digest())]
 	if ok {
+		h := hv.histogramStorage[hIndex]
+		hv.histogramsMu.RUnlock()
 		digester.free()
 		return h, nil
 	}
+	hv.histogramsMu.RUnlock()
 
 	hv.histogramsMu.Lock()
 	h, err := hv.newHistogram(digester.digest(), variableTagPairs)
@@ -266,18 +270,19 @@ func (hv *HistogramVector) MustGet(variableTagPairs ...string) *Histogram {
 }
 
 func (hv *HistogramVector) newHistogram(key []byte, variableTagPairs []string) (*Histogram, error) {
-	h, ok := hv.histograms[string(key)]
+	hIndex, ok := hv.histograms[string(key)]
 	if ok {
-		return h, nil
+		return hv.histogramStorage[hIndex], nil
 	}
-	h = &Histogram{
+	h := &Histogram{
 		buckets:  newBuckets(hv.bounds),
 		meta:     hv.meta,
 		unit:     hv.unit,
 		bounds:   hv.bounds,
 		tagPairs: hv.meta.MergeTags(variableTagPairs),
 	}
-	hv.histograms[string(key)] = h
+	hv.histograms[string(key)] = uint32(len(hv.histogramStorage))
+	hv.histogramStorage = append(hv.histogramStorage, h)
 	return h, nil
 }
 
@@ -289,7 +294,7 @@ func (hv *HistogramVector) snapshot() []HistogramSnapshot {
 	hv.histogramsMu.RLock()
 	defer hv.histogramsMu.RUnlock()
 	snaps := make([]HistogramSnapshot, 0, len(hv.histograms))
-	for _, h := range hv.histograms {
+	for _, h := range hv.histogramStorage {
 		snaps = append(snaps, h.snapshot())
 	}
 	return snaps
@@ -298,7 +303,7 @@ func (hv *HistogramVector) snapshot() []HistogramSnapshot {
 func (hv *HistogramVector) proto() *promproto.MetricFamily {
 	hv.histogramsMu.RLock()
 	protos := make([]*promproto.Metric, 0, len(hv.histograms))
-	for _, h := range hv.histograms {
+	for _, h := range hv.histogramStorage {
 		protos = append(protos, h.metric())
 	}
 	hv.histogramsMu.RUnlock()
@@ -316,7 +321,7 @@ func (hv *HistogramVector) proto() *promproto.MetricFamily {
 
 func (hv *HistogramVector) push(target push.Target) {
 	hv.histogramsMu.RLock()
-	for _, m := range hv.histograms {
+	for _, m := range hv.histogramStorage {
 		m.push(target)
 	}
 	hv.histogramsMu.RUnlock()

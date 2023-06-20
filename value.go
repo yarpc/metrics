@@ -68,7 +68,10 @@ type vector struct {
 	factory func(metadata, []string) metric
 
 	metricsMu sync.RWMutex
-	metrics   map[string]metric // key is variable tag vals
+	// key is variable tag vals, the value is the index to metricsStorage. We do this to reduce GC.
+	metrics map[string]uint32
+	// this is needed to reduce overhead of for loop because looping a map is more expensive
+	metricsStorage []metric
 }
 
 func (vec *vector) getOrCreate(variableTagPairs []string) (metric, error) {
@@ -81,12 +84,17 @@ func (vec *vector) getOrCreate(variableTagPairs []string) (metric, error) {
 	}
 
 	vec.metricsMu.RLock()
-	m, ok := vec.metrics[string(digester.digest())]
-	vec.metricsMu.RUnlock()
+	mIndex, ok := vec.metrics[string(digester.digest())]
+
 	if ok {
+		m := vec.metricsStorage[mIndex]
+		vec.metricsMu.RUnlock()
+
 		digester.free()
 		return m, nil
 	}
+
+	vec.metricsMu.RUnlock()
 
 	vec.metricsMu.Lock()
 	m, err := vec.newValue(digester.digest(), variableTagPairs)
@@ -97,12 +105,14 @@ func (vec *vector) getOrCreate(variableTagPairs []string) (metric, error) {
 }
 
 func (vec *vector) newValue(key []byte, variableTagPairs []string) (metric, error) {
-	m, ok := vec.metrics[string(key)]
+	mIndex, ok := vec.metrics[string(key)]
 	if ok {
+		m := vec.metricsStorage[mIndex]
 		return m, nil
 	}
-	m = vec.factory(vec.meta, variableTagPairs)
-	vec.metrics[string(key)] = m
+	m := vec.factory(vec.meta, variableTagPairs)
+	vec.metrics[string(key)] = uint32(len(vec.metricsStorage))
+	vec.metricsStorage = append(vec.metricsStorage, m)
 	return m, nil
 }
 
@@ -110,7 +120,7 @@ func (vec *vector) snapshot() []Snapshot {
 	vec.metricsMu.RLock()
 	defer vec.metricsMu.RUnlock()
 	snaps := make([]Snapshot, 0, len(vec.metrics))
-	for _, m := range vec.metrics {
+	for _, m := range vec.metricsStorage {
 		switch v := m.(type) {
 		case *Counter:
 			snaps = append(snaps, v.snapshot())
@@ -123,7 +133,7 @@ func (vec *vector) snapshot() []Snapshot {
 
 func (vec *vector) push(target push.Target) {
 	vec.metricsMu.RLock()
-	for _, m := range vec.metrics {
+	for _, m := range vec.metricsStorage {
 		m.push(target)
 	}
 	vec.metricsMu.RUnlock()

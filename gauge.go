@@ -157,9 +157,10 @@ type GaugeVector struct {
 
 func newGaugeVector(m metadata) *GaugeVector {
 	return &GaugeVector{vector{
-		meta:    m,
-		factory: newDynamicGauge,
-		metrics: make(map[string]metric, _defaultCollectionSize),
+		meta:           m,
+		factory:        newDynamicGauge,
+		metrics:        make(map[string]uint32, _defaultCollectionSize),
+		metricsStorage: make([]metric, 0, _defaultCollectionSize),
 	}}
 }
 
@@ -204,7 +205,7 @@ func (gv *GaugeVector) proto() *promproto.MetricFamily {
 	}
 	gv.metricsMu.RLock()
 	protos := make([]*promproto.Metric, 0, len(gv.metrics))
-	for _, metric := range gv.metrics {
+	for _, metric := range gv.metricsStorage {
 		protos = append(protos, metric.(*Gauge).metric())
 	}
 	gv.metricsMu.RUnlock()
