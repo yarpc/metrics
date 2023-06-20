@@ -22,4 +22,4 @@ package metrics
 
 // Version is the current semantic version, exported for runtime compatibility
 // checks.
-const Version = "1.3.1"
+const Version = "1.4.0"
