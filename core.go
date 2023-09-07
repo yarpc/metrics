@@ -82,8 +82,8 @@ func (c *core) register(m metric) error {
 	}
 	if _, ok := c.ids[string(id.digest())]; ok {
 		c.Unlock()
-		return fmt.Errorf("a metric with name %q and the same constant "+
-			"tag names and values is already registered", *meta.Name)
+		return fmt.Errorf("a metric with name %q and the same constant %q"+
+			"tag names and values is already registered", *meta.Name, string(id.digest()))
 	}
 	c.dimsByName[*meta.Name] = meta.Dims
 	c.ids[string(id.digest())] = struct{}{}
